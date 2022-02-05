@@ -3,14 +3,16 @@ import json
 import pandas as pd
 import numpy as np
 import os
-from task import pubmed_task
+from task import pubmed_task, GEN_ART_TASK, GEN_DRI_TASK, GEN_PMD_TASK, GEN_NIC_TASK, tgeneric_task
 import re
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def plot_confusion_matrix(cm, classes,
+def plot_confusion_matrix(cm,
+                          classes,
                           normalize=False,
                           title=None,
                           cmap=plt.cm.Blues,
@@ -35,16 +37,20 @@ def plot_confusion_matrix(cm, classes,
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
     ax.figure.colorbar(im, ax=ax)
     # We want to show all ticks...
-    ax.set(xticks=np.arange(cm.shape[1]),
-           yticks=np.arange(cm.shape[0]),
-           # ... and label them with the respective list entries
-           xticklabels=classes, yticklabels=classes,
-           title=title,
-           ylabel='True label',
-           xlabel='Predicted label')
+    ax.set(
+        xticks=np.arange(cm.shape[1]),
+        yticks=np.arange(cm.shape[0]),
+        # ... and label them with the respective list entries
+        xticklabels=classes,
+        yticklabels=classes,
+        title=title,
+        ylabel='True label',
+        xlabel='Predicted label')
 
     # Rotate the tick labels and set their alignment.
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+    plt.setp(ax.get_xticklabels(),
+             rotation=45,
+             ha="right",
              rotation_mode="anchor")
 
     # Loop over data dimensions and create text annotations.
@@ -52,8 +58,11 @@ def plot_confusion_matrix(cm, classes,
     thresh = cm.max() / 2.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
-            ax.text(j, i, format(cm[i, j], fmt),
-                    ha="center", va="center",
+            ax.text(j,
+                    i,
+                    format(cm[i, j], fmt),
+                    ha="center",
+                    va="center",
                     color="white" if cm[i, j] > thresh else "black")
     fig.tight_layout()
     if filename is not None:
@@ -73,7 +82,8 @@ def load_best_results(run_path, task):
             best_metrics["dev_metrics"]["macro-f1"],
             best_metrics["test_metrics"]["weighted-f1"],
             best_metrics["test_metrics"]["acc"],
-            best_metrics["test_metrics"]["macro-f1"]])
+            best_metrics["test_metrics"]["macro-f1"]
+        ])
 
     return results
 
@@ -104,7 +114,8 @@ def load_best_dev_metrics(run_path, task_name):
                 if metrics["task"] != task_name:
                     continue
 
-                if metrics["dev_metrics"][dev_metric] > best_dev or best_metrics is None:
+                if metrics["dev_metrics"][
+                        dev_metric] > best_dev or best_metrics is None:
                     best_dev = metrics["dev_metrics"][dev_metric]
                     best_metrics = metrics
                 epoch = metrics["epoch"]
@@ -114,22 +125,24 @@ def load_best_dev_metrics(run_path, task_name):
             results.append(best_metrics)
     return results
 
+
 def create_generic_task(task_name):
-    return generic_task(task_name, train_batch_size=1, max_docs=-1)
+    return tgeneric_task(task_name, train_batch_size=1, max_docs=-1)
+
 
 def get_all_tasks():
     result = []
     result.append(pubmed_task(train_batch_size=-1, max_docs=-1))
-    result.append(pubmed_task_small(train_batch_size=-1, max_docs=-1))
-    result.append(nicta_task(train_batch_size=-1, max_docs=-1))
-    result.append(dri_task(train_batch_size=-1, max_docs=-1))
-    result.append(art_task(train_batch_size=-1, max_docs=-1))
-    result.append(art_task_small(train_batch_size=-1, max_docs=-1))
+    # result.append(pubmed_task_small(train_batch_size=-1, max_docs=-1))
+    # result.append(nicta_task(train_batch_size=-1, max_docs=-1))
+    # result.append(dri_task(train_batch_size=-1, max_docs=-1))
+    # result.append(art_task(train_batch_size=-1, max_docs=-1))
+    # result.append(art_task_small(train_batch_size=-1, max_docs=-1))
 
-    result.append(create_generic_task(GEN_DRI_TASK))
+    # result.append(create_generic_task(GEN_DRI_TASK))
     result.append(create_generic_task(GEN_PMD_TASK))
-    result.append(create_generic_task(GEN_NIC_TASK))
-    result.append(create_generic_task(GEN_ART_TASK))
+    # result.append(create_generic_task(GEN_NIC_TASK))
+    # result.append(create_generic_task(GEN_ART_TASK))
 
     return result
 
@@ -202,7 +215,10 @@ def eval_and_save_metrics(path):
         r = [task + " std"] + stds.tolist()
         task_metrics.append(r)
 
-    metrics_columns = ["dev weighted-f1", "dev accuracy", "dev macro-f1", "test weighted-f1", "test accuracy", "test macro-f1"]
+    metrics_columns = [
+        "dev weighted-f1", "dev accuracy", "dev macro-f1", "test weighted-f1",
+        "test accuracy", "test macro-f1"
+    ]
     result_df = pd.DataFrame(task_metrics, columns=["task"] + metrics_columns)
     result_df.to_csv(os.path.join(path, "results.csv"))
 
@@ -210,21 +226,20 @@ def eval_and_save_metrics(path):
     for t in tasks_in_run:
         task_cm_abs = load_confusion_matrix(path, t, absolute=True)
         task_cm_rel = load_confusion_matrix(path, t, absolute=False)
-        plot_confusion_matrix(
-            task_cm_rel,
-            get_task(t).labels[1:],
-            title=t,
-            normalize=True,
-            filename=os.path.join(path, f'{t}_cm.pdf'))
+        plot_confusion_matrix(task_cm_rel,
+                              get_task(t).labels[1:],
+                              title=t,
+                              normalize=True,
+                              filename=os.path.join(path, f'{t}_cm.pdf'))
         f1s = calc_f1(task_cm_abs)
         for i, f1 in enumerate(f1s):
             label_name = get_task(t).labels[1:][i]
             label_order = get_task(t).labels_pres.index(label_name)
             f1_per_class.append([t, label_order, label_name.title(), f1])
 
-    f1_per_label_df = pd.DataFrame(f1_per_class, columns=["task", "order", "label", "F1"])
+    f1_per_label_df = pd.DataFrame(f1_per_class,
+                                   columns=["task", "order", "label", "F1"])
     f1_per_label_df = f1_per_label_df.sort_values(by=["task", "order"])
     f1_per_label_df.to_csv(os.path.join(path, "f1_per_label.csv"))
 
     return result_df, f1_per_label_df
-
