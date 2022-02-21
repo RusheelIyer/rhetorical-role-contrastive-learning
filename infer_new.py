@@ -10,7 +10,7 @@ from task import pubmed_task
 from models import BertHSLN
 from eval import eval_model, clear_and_map_padded_values
 import torch
-from transformers import RobertaTokenizer
+from transformers import AutoTokenizer, AutoModelForPreTraining
 from utils import tensor_dict_to_gpu, tensor_dict_to_cpu
 
 
@@ -75,10 +75,9 @@ def write_in_hsln_format(input_json, hsln_format_txt_dirpath, tokenizer):
 if __name__ == "__main__":
     [_, input_dir, prediction_output_json_path, model_path] = sys.argv
 
-    BERT_VOCAB = "roberta-base"
-    BERT_MODEL = "roberta-base"
-    tokenizer = RobertaTokenizer.from_pretrained(BERT_VOCAB,
-                                                 do_lower_case=True)
+    BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+    BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
 
     config = {
         "bert_model": BERT_MODEL,

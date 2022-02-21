@@ -1,5 +1,5 @@
 from tqdm import tqdm
-from transformers import RobertaTokenizer
+from transformers import AutoTokenizer
 import json
 import os
 from data_prep import attach_short_sentence_boundries_to_next
@@ -71,11 +71,10 @@ if __name__ == "__main__":
     nlp = get_spacy_nlp_pipeline_for_indian_legal_text(
         model_name="en_core_web_trf",
         disable=["attribute_ruler", "lemmatizer", 'ner'])
-    BERT_VOCAB = "roberta-base"
-    BERT_MODEL = "roberta-base"
+    BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+    BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
 
-    tokenizer = RobertaTokenizer.from_pretrained(BERT_VOCAB,
-                                                 do_lower_case=True)
+    tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
 
     MAX_DOCS = -1
 

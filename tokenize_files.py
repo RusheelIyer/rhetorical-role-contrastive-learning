@@ -1,11 +1,11 @@
 """Tokenizes the sentences with BertTokenizer as tokenisation costs some time.
 """
 import sys
-from transformers import RobertaTokenizer
+from transformers import AutoTokenizer
 import json
 from sklearn.model_selection import train_test_split
 
-BERT_VOCAB = "roberta-base"
+BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
 MAX_SEQ_LENGTH = 128
 
 
@@ -38,8 +38,7 @@ def write_in_hsln_format(input, hsln_format_txt_dirpath, tokenizer):
 
 def tokenize():
     [_, train_input_json, dev_input_json, test_input_json] = sys.argv
-    tokenizer = RobertaTokenizer.from_pretrained(BERT_VOCAB,
-                                                 do_lower_case=True)
+    tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
     train_json_format = json.load(open(train_input_json))
     dev_json_format = json.load(open(dev_input_json))
     test_json_format = json.load(open(test_input_json))

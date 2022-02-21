@@ -149,7 +149,7 @@ class Task:
                  task_folder_name=None,
                  short_name=None,
                  labels_pres=None,
-                 data_folder="datasets/"):
+                 data_folder="/content/rhetorical-role-baseline/datasets/"):
         self.labels_pres = labels_pres
         self.short_name = short_name
         self.task_name = task_name

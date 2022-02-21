@@ -13,7 +13,7 @@ from models import BertHSLN
 import os
 
 # BERT_VOCAB = "bert-base-uncased"
-BERT_MODEL = "roberta-base"
+BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
 # BERT_VOCAB = "bert_model/scibert_scivocab_uncased/vocab.txt"
 #BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
