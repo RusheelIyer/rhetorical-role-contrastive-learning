@@ -3,7 +3,7 @@ from allennlp.modules.seq2seq_encoders import PytorchSeq2SeqWrapper
 from allennlp.nn.util import masked_mean, masked_softmax
 import copy
 
-from transformers import RobertaModel
+from transformers import AutoModel
 
 from allennlp.modules import ConditionalRandomField
 
@@ -130,7 +130,7 @@ class AttentionPooling(torch.nn.Module):
 class BertTokenEmbedder(torch.nn.Module):
     def __init__(self, config):
         super(BertTokenEmbedder, self).__init__()
-        self.bert = RobertaModel.from_pretrained(config["bert_model"])
+        self.bert = AutoModel.from_pretrained(config["bert_model"])
         # state_dict_1 = self.bert.state_dict()
         # state_dict_2 = torch.load('/home/astha_agarwal/model/pytorch_model.bin')
         # for name2 in state_dict_2.keys():
