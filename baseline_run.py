@@ -19,18 +19,18 @@ BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
 
 config = {
     "bert_model": BERT_MODEL,
-    "bert_trainable": False,
+    "nable": False,
     "model": BertHSLN.__name__,
     "cacheable_tasks": [],
     "dropout": 0.5,
-    "word_lstm_hs": 758,
+    "word_lstm_hs": 768,
     "att_pooling_dim_ctx": 200,
     "att_pooling_num_ctx": 15,
     "lr": 3e-05,
     "lr_epoch_decay": 0.9,
-    "batch_size": 32,
+    "batch_size": 48,
     "max_seq_length": 128,
-    "max_epochs": 2,
+    "max_epochs": 40,
     "early_stopping": 5,
 }
 
