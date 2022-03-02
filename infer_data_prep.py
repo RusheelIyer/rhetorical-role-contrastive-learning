@@ -71,8 +71,10 @@ if __name__ == "__main__":
     nlp = get_spacy_nlp_pipeline_for_indian_legal_text(
         model_name="en_core_web_trf",
         disable=["attribute_ruler", "lemmatizer", 'ner'])
-    BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
-    BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    # BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+    # BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    BERT_MODEL = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
+    BERT_VOCAB = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
 
     tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
 

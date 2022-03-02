@@ -75,8 +75,10 @@ def write_in_hsln_format(input_json, hsln_format_txt_dirpath, tokenizer):
 if __name__ == "__main__":
     [_, input_dir, prediction_output_json_path, model_path] = sys.argv
 
-    BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
-    BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    # BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+    # BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    BERT_MODEL = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
+    BERT_VOCAB = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
     tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
 
     config = {

@@ -5,7 +5,8 @@ from transformers import AutoTokenizer
 import json
 from sklearn.model_selection import train_test_split
 
-BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+# BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
+BERT_VOCAB = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
 MAX_SEQ_LENGTH = 128
 
 

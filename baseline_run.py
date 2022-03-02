@@ -13,13 +13,14 @@ from models import BertHSLN
 import os
 
 # BERT_VOCAB = "bert-base-uncased"
-BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+# BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+BERT_MODEL = "/content/drive/MyDrive/BTech_Project/indian_legal_bert_pytorch_ckpt"
 # BERT_VOCAB = "bert_model/scibert_scivocab_uncased/vocab.txt"
 #BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
 config = {
     "bert_model": BERT_MODEL,
-    "nable": False,
+    "bert_trainable": False,
     "model": BertHSLN.__name__,
     "cacheable_tasks": [],
     "dropout": 0.5,
