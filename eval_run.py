@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 import os
-from task import pubmed_task, GEN_ART_TASK, GEN_DRI_TASK, GEN_PMD_TASK, GEN_NIC_TASK, tgeneric_task
+from task import legal_task
 import re
 import matplotlib
 
@@ -132,15 +132,10 @@ def create_generic_task(task_name):
 
 def get_all_tasks():
     result = []
-    result.append(pubmed_task(train_batch_size=-1, max_docs=-1))
-    # result.append(pubmed_task_small(train_batch_size=-1, max_docs=-1))
-    # result.append(nicta_task(train_batch_size=-1, max_docs=-1))
-    # result.append(dri_task(train_batch_size=-1, max_docs=-1))
-    # result.append(art_task(train_batch_size=-1, max_docs=-1))
-    # result.append(art_task_small(train_batch_size=-1, max_docs=-1))
+    result.append(legal_task(train_batch_size=-1, max_docs=-1))
 
     # result.append(create_generic_task(GEN_DRI_TASK))
-    result.append(create_generic_task(GEN_PMD_TASK))
+    result.append(create_generic_task(GEN_LEGAL_TASK))
     # result.append(create_generic_task(GEN_NIC_TASK))
     # result.append(create_generic_task(GEN_ART_TASK))
 
