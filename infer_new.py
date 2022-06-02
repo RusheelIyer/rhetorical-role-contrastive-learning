@@ -58,14 +58,14 @@ def write_in_hsln_format(input_json, hsln_format_txt_dirpath, tokenizer):
                 final_string = final_string + "NONE" + "\t" + sent_tokens_txt + "\n"
         final_string = final_string + "\n"
 
-    with open(hsln_format_txt_dirpath + '/test_scibert.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/test.txt', "w+") as file:
         file.write(final_string)
 
-    with open(hsln_format_txt_dirpath + '/train_scibert.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/train.txt', "w+") as file:
         file.write(final_string)
-    with open(hsln_format_txt_dirpath + '/dev_scibert.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/dev.txt', "w+") as file:
         file.write(final_string)
-    with open(hsln_format_txt_dirpath + '/sentece_boundries.json',
+    with open(hsln_format_txt_dirpath + '/sentence_boundaries.json',
               'w+') as json_file:
         json.dump(filename_sent_boundries, json_file)
 
@@ -99,10 +99,10 @@ if __name__ == "__main__":
     MAX_DOCS = -1
     device = get_device(0)
 
-    hsln_format_txt_dirpath = 'datasets/pubmed-20k'
+    hsln_format_txt_dirpath = 'datasets/legal-corpus'
     write_in_hsln_format(input_dir, hsln_format_txt_dirpath, tokenizer)
     filename_sent_boundries = json.load(
-        open(hsln_format_txt_dirpath + '/sentece_boundries.json'))
+        open(hsln_format_txt_dirpath + '/sentence_boundaries.json'))
     predictions = infer(model_path, MAX_DOCS, prediction_output_json_path)
 
     ##### write the output in format needed by revision script
