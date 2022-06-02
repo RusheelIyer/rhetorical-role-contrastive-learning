@@ -13,7 +13,7 @@ spacy.prefer_gpu()
 def split_into_sentences_tokenize_write(prediction_input_ls_format,
                                         custom_processed_data_path, nlp):
     ########## This function accepts the input files in LS format, creates tokens and writes them with label as "NONE" to text file
-    hsln_format_txt_dirpath = 'datasets/pubmed-20k'
+    hsln_format_txt_dirpath = 'datasets/legal'
     if not os.path.exists(hsln_format_txt_dirpath):
         os.makedirs(hsln_format_txt_dirpath)
     output_json = []

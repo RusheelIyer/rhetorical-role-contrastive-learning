@@ -6,7 +6,7 @@ import os
 import sys
 from dataset_reader import DocumentsDataset
 from utils import get_device
-from task import pubmed_task
+from task import legal_task
 from models import BertHSLN
 from eval import eval_model, clear_and_map_padded_values
 import torch
@@ -21,7 +21,7 @@ def create_task(create_func):
 
 def infer(model_path, max_docs, prediction_output_json_path):
     ######### This function loads the model from given model path and predefined data. It then predicts the rhetorical roles and returns
-    task = create_task(pubmed_task)
+    task = create_task(legal_task)
     model = getattr(models, config["model"])(config, [task]).to(device)
     model.load_state_dict(torch.load(model_path))
 
@@ -58,12 +58,12 @@ def write_in_hsln_format(input_json, hsln_format_txt_dirpath, tokenizer):
                 final_string = final_string + "NONE" + "\t" + sent_tokens_txt + "\n"
         final_string = final_string + "\n"
 
-    with open(hsln_format_txt_dirpath + '/test.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/test_legalbert.txt', "w+") as file:
         file.write(final_string)
 
-    with open(hsln_format_txt_dirpath + '/train.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/train_legalbert.txt', "w+") as file:
         file.write(final_string)
-    with open(hsln_format_txt_dirpath + '/dev.txt', "w+") as file:
+    with open(hsln_format_txt_dirpath + '/dev_legalbert.txt', "w+") as file:
         file.write(final_string)
     with open(hsln_format_txt_dirpath + '/sentence_boundaries.json',
               'w+') as json_file:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     MAX_DOCS = -1
     device = get_device(0)
 
-    hsln_format_txt_dirpath = 'datasets/legal-corpus'
+    hsln_format_txt_dirpath = 'datasets/legal'
     write_in_hsln_format(input_dir, hsln_format_txt_dirpath, tokenizer)
     filename_sent_boundries = json.load(
         open(hsln_format_txt_dirpath + '/sentence_boundaries.json'))
