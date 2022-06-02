@@ -44,11 +44,11 @@ def tokenize():
     test_json_format = json.load(open(test_input_json))
 
     write_in_hsln_format(train_json_format,
-                         'datasets/pubmed-20k/train_scibert.txt', tokenizer)
+                         'datasets/legal/train_legalbert.txt', tokenizer)
     write_in_hsln_format(dev_json_format,
-                         'datasets/pubmed-20k/dev_scibert.txt', tokenizer)
+                         'datasets/legal/dev_legalbert.txt', tokenizer)
     write_in_hsln_format(test_json_format,
-                         'datasets/pubmed-20k/test_scibert.txt', tokenizer)
+                         'datasets/legal/test_legalbert.txt', tokenizer)
 
 
 tokenize()
