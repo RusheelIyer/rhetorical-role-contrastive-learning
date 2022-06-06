@@ -19,7 +19,7 @@ BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
 
 config = {
     "bert_model": BERT_MODEL,
-    "nable": False,
+    "bert_trainable": False,
     "model": BertHSLN.__name__,
     "cacheable_tasks": [],
     "dropout": 0.5,
@@ -47,20 +47,7 @@ def create_generic_task(task_name):
                         train_batch_size=config["batch_size"],
                         max_docs=MAX_DOCS)
 
-
-# ADAPT: Uncomment the task that has to be trained and comment all other tasks out
-
-# ADAPT: Uncomment the task that has to be trained and comment all other tasks out
 task = create_task(legal_task)
-#task = create_task(pubmed_task_small)
-#task = create_task(nicta_task)
-#task = create_task(dri_task)
-#task = create_task(art_task)
-#task = create_task(art_task_small)
-#task = create_generic_task(GEN_DRI_TASK)
-#task = create_generic_task(GEN_PMD_TASK)
-#task = create_generic_task(GEN_NIC_TASK)
-# task = create_generic_task(GEN_ART_TASK)
 
 # ADAPT: Set to False if you do not want to save the best model
 save_best_models = True
