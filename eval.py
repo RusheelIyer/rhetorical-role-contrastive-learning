@@ -16,6 +16,7 @@ def calc_classification_metrics(y_true, y_predicted, labels):
     class_report = classification_report(y_true, y_predicted, digits=4)
     confusion_abs = confusion_matrix(y_true, y_predicted, labels=labels)
     # normalize confusion matrix
+    np.seterr(divide='ignore', invalid='ignore')
     confusion = np.around(confusion_abs.astype('float') / confusion_abs.sum(axis=1)[:, np.newaxis] * 100, 2)
     return {"acc": acc,
             "macro-f1": macro_f1,

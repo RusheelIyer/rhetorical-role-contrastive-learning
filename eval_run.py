@@ -133,7 +133,7 @@ def create_generic_task(task_name):
 def get_all_tasks():
     result = []
     result.append(legal_task(train_batch_size=-1, max_docs=-1))
-    result.append(create_generic_task(GEN_LEGAL_TASK))
+    # result.append(create_generic_task(GEN_LEGAL_TASK))
 
     return result
 
