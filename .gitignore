@@ -1,2 +1,4 @@
 model.pt
 *.DS_Store
+__pycache__
+datasets/*.json
