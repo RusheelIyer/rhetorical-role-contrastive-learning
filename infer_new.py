@@ -24,7 +24,10 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
 
     folds = task.get_folds()
     test_batches = folds[0].test
-    metrics, confusion, labels_dict, class_report = eval_model(model, test_batches, device, task)
+    metrics, confusion, labels_dict, class_report, sentence_embeddings = eval_model(model, test_batches, device, task)
+
+    print(len(sentence_embeddings))
+    print(len(labels_dict))
 
     return labels_dict
 def write_in_hsln_format(input_json,hsln_format_txt_dirpath,tokenizer):

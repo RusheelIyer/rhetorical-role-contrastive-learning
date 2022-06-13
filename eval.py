@@ -37,7 +37,12 @@ def calc_classification_metrics(y_true, y_predicted, labels):
            class_report
 
 
-
+# Store the sentence embeddings
+activation = {}
+def get_activation(name):
+    def hook(model, input, output):
+        activation[name] = output.detach()
+    return hook
 
 def eval_model(model, eval_batches, device, task):
     model.eval()
@@ -47,6 +52,7 @@ def eval_model(model, eval_batches, device, task):
     docwise_predicted_labels=[]
     docwise_true_labels = []
     doc_name_list = []
+    sentence_embeddings = []
     with torch.no_grad():
         for batch in eval_batches:
             # move tensor to gpu
@@ -56,6 +62,7 @@ def eval_model(model, eval_batches, device, task):
                 continue
 
             output = model(batch=batch)
+            sentence_embeddings_batch = activation['sentence_lstm']
 
             true_labels_batch, predicted_labels_batch = \
                 clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels, output["sentence_embeddings"].view(-1))
@@ -67,6 +74,8 @@ def eval_model(model, eval_batches, device, task):
             true_labels.extend(true_labels_batch)
             predicted_labels.extend(predicted_labels_batch)
 
+            sentence_embeddings.extend(sentence_embeddings_batch)
+
             tensor_dict_to_cpu(batch)
     labels_dict['y_true']=true_labels
     labels_dict['y_predicted'] = predicted_labels
@@ -76,7 +85,7 @@ def eval_model(model, eval_batches, device, task):
     labels_dict['doc_names'] = doc_name_list
     metrics, confusion, class_report = \
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
-    return metrics, confusion,labels_dict, class_report
+    return metrics, confusion, labels_dict, class_report, sentence_embeddings
 
 '''
 Params:
