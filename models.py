@@ -31,6 +31,7 @@ class CRFOutputLayer(torch.nn.Module):
         if labels is not None:
             log_likelihood = self.crf(logits, labels, mask)
             loss = -log_likelihood
+
             outputs["loss"] = loss
         else:
             best_paths = self.crf.viterbi_tags(logits, mask)
@@ -204,9 +205,50 @@ class BertHSLN(torch.nn.Module):
         else:
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
 
+    def get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents):
+        total = 0
+
+        for i in range(documents):
+            for sentence in sentence_embeddings_encoded[i]:
+                # TODO: Add weight here
+                total += cos(embedding, sentence)
+
+        return torch.exp(total)
+
+    def calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels):
+        positives_per_label = {}
+
+        for label in list(set(labels)):
+            for i in range(documents):
+                indices = [j for j, x in enumerate(labels) if x == label]
+                positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
+
+        loss = 0
+        label_id = 0
+        cos = torch.nn.CosineSimilarity()
+        for i in range(documents):
+            for embedding in sentence_embeddings_encoded[i]:
+                label = labels[label_id]
+                label_id += 1
+
+                positives = positives_per_label[label]
+                num_positives = len(positives)
+                
+                similarity_sum = 0
+                for positive in positives:
+                    similarity = torch.exp(cos(embedding, positive))
+                    similarity /= get_anchor_similarity(cos, embedding, sentence_embeddings_encoded)
+                    similarity_sum += torch.log(similarity)
+
+                loss += (-1/num_positives) * similarity_sum
+
+        return loss
+
     def forward(self, batch, labels=None, output_all_tasks=False):
 
         documents, sentences, tokens = batch["input_ids"].shape
+
+        print("Label Shape: ", labels.shape)
 
         # shape (documents*sentences, tokens, 768)
         bert_embeddings = self.bert(batch)
@@ -227,7 +269,6 @@ class BertHSLN(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings = self.dropout(sentence_embeddings)
 
-
         sentence_mask = batch["sentence_mask"]
 
         # shape: (documents, sentence, 2*lstm_hidden_size)
@@ -240,6 +281,15 @@ class BertHSLN(torch.nn.Module):
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
+
+        classification_loss = output["loss"]
+
+        cl_lambda = 0.2
+        contrastive_loss = calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels)
+
+        print(contrastive_loss)
+
+        output["loss"] = ((1-cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
 
         return output
 
@@ -323,7 +373,6 @@ class BertHSLNMultiSeparateLayers(torch.nn.Module):
         # shape: (documents, sentence, 2*lstm_hidden_size)
         device = self.sentence_lstm.get_device(task_name)
         sentence_embeddings_encoded = self.sentence_lstm(task_name, sentence_embeddings.to(device), sentence_mask.to(device))
-        sentence_embeddings_save = sentence_embeddings_encoded
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
