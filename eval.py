@@ -73,7 +73,7 @@ def eval_model(model, eval_batches, device, task):
             sentence_embeddings_batch = activation['sentence_lstm']
 
             true_labels_batch, predicted_labels_batch = \
-                clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels, output["sentence_embeddings"].view(-1))
+                clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
 
             docwise_true_labels.append(true_labels_batch)
             docwise_predicted_labels.append(predicted_labels_batch)
@@ -100,16 +100,14 @@ Params:
     true_labels, predicted_labels: label IDs
     labels: array of labels with IDs
 '''
-def clear_and_map_padded_values(true_labels, predicted_labels, labels, embeddings):
+def clear_and_map_padded_values(true_labels, predicted_labels, labels):
     assert len(true_labels) == len(predicted_labels)
     cleared_predicted = []
     cleared_true = []
-    cleared_embedding = []
-    for true_label, predicted_label, embedding in zip(true_labels, predicted_labels, embeddings):
+    for true_label, predicted_label, embedding in zip(true_labels, predicted_labels):
         # filter masked labels (0)
         if true_label > 0:
             cleared_true.append(labels[true_label])
             cleared_predicted.append(labels[predicted_label])
-            cleared_embedding.append(embedding)
-    return cleared_true, cleared_predicted, cleared_embedding
+    return cleared_true, cleared_predicted
 
