@@ -33,7 +33,7 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
     with open(r'datasets/pred_labels.txt', 'w') as fp:
         fp.write('\n'.join(labels_dict['y_predicted']))
 
-    with open(r'datasets/y_true.txt', 'w') as fp:
+    with open(r'datasets/true_labels.txt', 'w') as fp:
         fp.write('\n'.join(labels_dict['y_true']))
 
     return labels_dict
