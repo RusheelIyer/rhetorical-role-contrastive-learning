@@ -104,7 +104,7 @@ def clear_and_map_padded_values(true_labels, predicted_labels, labels):
     assert len(true_labels) == len(predicted_labels)
     cleared_predicted = []
     cleared_true = []
-    for true_label, predicted_label, embedding in zip(true_labels, predicted_labels):
+    for true_label, predicted_label in zip(true_labels, predicted_labels):
         # filter masked labels (0)
         if true_label > 0:
             cleared_true.append(labels[true_label])
