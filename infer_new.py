@@ -16,8 +16,6 @@ def create_task(create_func):
     return create_func(train_batch_size=config["batch_size"], max_docs=MAX_DOCS)
 
 
-
-
 def infer(model_path, max_docs, prediction_output_json_path, device):
     ######### This function loads the model from given model path and predefined data. It then predicts the rhetorical roles and returns
     task = create_task(pubmed_task)
@@ -28,7 +26,15 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
     test_batches = folds[0].test
     metrics, confusion, labels_dict, class_report, sentence_embeddings = eval_model(model, test_batches, device, task)
 
+    # Save the sentence embeddings to external file
     torch.save(sentence_embeddings, 'datasets/embeddings.pt')
+
+    # Save the true and predicted labels to external file
+    with open(r'datasets/pred_labels.txt', 'w') as fp:
+        fp.write('\n'.join(labels_dict['y_predicted']))
+
+    with open(r'datasets/y_true.txt', 'w') as fp:
+        fp.write('\n'.join(labels_dict['y_true']))
 
     return labels_dict
 def write_in_hsln_format(input_json,hsln_format_txt_dirpath,tokenizer):
