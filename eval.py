@@ -37,7 +37,8 @@ def calc_classification_metrics(y_true, y_predicted, labels):
            class_report
 
 
-# Store the sentence embeddings
+# Store the embeddings after a given layer in the activation dict with the
+# corresponding layer name as a key
 activation = {}
 def get_activation(name):
     def hook(model, input, output):
@@ -45,7 +46,11 @@ def get_activation(name):
     return hook
 
 def eval_model(model, eval_batches, device, task):
+    
+    # register a hook to receive activations after sentence_lstm layer
+    model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
     model.eval()
+
     true_labels = []
     labels_dict={}
     predicted_labels = []
@@ -53,6 +58,7 @@ def eval_model(model, eval_batches, device, task):
     docwise_true_labels = []
     doc_name_list = []
     sentence_embeddings = []
+
     with torch.no_grad():
         for batch in eval_batches:
             # move tensor to gpu
@@ -62,6 +68,8 @@ def eval_model(model, eval_batches, device, task):
                 continue
 
             output = model(batch=batch)
+
+            # get the batches sentence embeddings
             sentence_embeddings_batch = activation['sentence_lstm']
 
             true_labels_batch, predicted_labels_batch = \
