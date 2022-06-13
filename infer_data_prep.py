@@ -1,37 +1,47 @@
-from tqdm import tqdm
-from transformers import AutoTokenizer
 import json
 import os
-from data_prep import attach_short_sentence_boundries_to_next
-from data_prep import get_spacy_nlp_pipeline_for_indian_legal_text
-import spacy
 import sys
+
+import spacy
+from tqdm import tqdm
+from transformers import BertTokenizer
+
+from data_prep import attach_short_sentence_boundries_to_next, seperate_and_clean_preamble, \
+    get_spacy_nlp_pipeline_for_preamble
+from data_prep import get_spacy_nlp_pipeline_for_indian_legal_text
 
 spacy.prefer_gpu()
 
 
-def split_into_sentences_tokenize_write(prediction_input_ls_format,
-                                        custom_processed_data_path, nlp):
+def split_into_sentences_tokenize_write(prediction_input_ls_format, custom_processed_data_path, nlp,
+                                        hsln_format_txt_dirpath='datasets/pubmed-20k'):
     ########## This function accepts the input files in LS format, creates tokens and writes them with label as "NONE" to text file
-    hsln_format_txt_dirpath = 'datasets/legal'
     if not os.path.exists(hsln_format_txt_dirpath):
         os.makedirs(hsln_format_txt_dirpath)
+    max_length = 10000
     output_json = []
-    filename_sent_boundries = {
-    }  ###### key is the filename and value is dict containing sentence spans {"abc.txt":{"sentence_span":[(1,10),(11,20),...]} , "pqr.txt":{...},...}
+    filename_sent_boundries = {}  ###### key is the filename and value is dict containing sentence spans {"abc.txt":{"sentence_span":[(1,10),(11,20),...]} , "pqr.txt":{...},...}
     for adjudicated_doc in tqdm(prediction_input_ls_format):
 
         doc_txt = adjudicated_doc['data']['text']
+        preamble_text = adjudicated_doc['data']['preamble_text']
+        judgement_text = adjudicated_doc['data']['judgement_text']
         file_name = adjudicated_doc['id']
-        if filename_sent_boundries.get(
-                file_name
-        ) is None:  ##### Ignore if the file is already present
 
-            nlp_doc = nlp(doc_txt)
-            sentence_boundries = [(sent.start_char, sent.end_char)
-                                  for sent in nlp_doc.sents]
-            revised_sentence_boundries = attach_short_sentence_boundries_to_next(
-                sentence_boundries, doc_txt)
+        if filename_sent_boundries.get(file_name) is None:  ##### Ignore if the file is already present
+            tokens = nlp.tokenizer(judgement_text)
+            if len(tokens) > max_length:
+                chunks = [tokens[i:i + max_length] for i in range(0, len(tokens), max_length)]
+                nlp_docs = [nlp(i.text) for i in tqdm(chunks, desc='Processing NLP chunks')]
+                nlp_docs = [nlp(preamble_text)] + nlp_docs
+                nlp_doc = spacy.tokens.Doc.from_docs(nlp_docs)
+            else:
+                nlp_preamble_doc = nlp(preamble_text)
+                nlp_judgement_doc = nlp(judgement_text)
+                nlp_doc = spacy.tokens.Doc.from_docs([nlp_preamble_doc, nlp_judgement_doc])
+            doc_txt = nlp_doc.text
+            sentence_boundries = [(sent.start_char, sent.end_char) for sent in nlp_doc.sents]
+            revised_sentence_boundries = attach_short_sentence_boundries_to_next(sentence_boundries, doc_txt)
             adjudicated_doc['annotations'] = []
             adjudicated_doc['annotations'].append({})
             adjudicated_doc['annotations'][0]['result'] = []
@@ -48,15 +58,14 @@ def split_into_sentences_tokenize_write(prediction_input_ls_format,
                     sent_data['value']['end'] = sentence_boundry[1]
                     sent_data['value']['text'] = sentence_txt
                     sent_data['value']['labels'] = []
-                    adjudicated_doc['annotations'][0]['result'].append(
-                        sent_data)
+                    adjudicated_doc['annotations'][0]['result'].append(sent_data)
         output_json.append(adjudicated_doc)
     with open(custom_processed_data_path, 'w+') as f:
         json.dump(output_json, f)
 
 
 if __name__ == "__main__":
-    [_, custom_data_path, custom_processed_data_path] = sys.argv
+    #[_, custom_data_path, custom_processed_data_path] = sys.argv
     # prediction_input_files_path = '/data/hsln_prediction/input_data_rgnlu.json' ###### in label studio format
     #     prediction_input_files_path = '/data/hsln_prediction/input_data_rgnlu.json'
     #     prediction_input_ls_format=[  {"id": 1,
@@ -66,17 +75,26 @@ if __name__ == "__main__":
     #   "data": { "text": "2 Immediately after the assault on 12.11.1997, the Complainant  Sukhdev was admitted to the Civil Hospital, Ashok Nagar for treatment.\n2.3 The medical examination of the Complainant  Sukhdev was conducted by Dr. M. Bhagat  P.W.6 at the Civil Hospital, Ashok Nagar, which recorded the following injuries : (i) Stab Wound  3.5 x 1 cm  deep in the chest cavity, over the left side of the chest.\n        (ii) Spindle shaped incised wound  3 x 2 cm  muscle deep, present on the upper region of the right buttocks.\n        (iii) Stab Wound  2 x 1 cm  over subscapula region, left side. Bleeding was present.\n        (iv) Stab Wound  1 x 1 cm  over illeal region of hip, left side. Bleeding was present.\n The medical report further stated that the injuries were caused by a sharpedged, pointed object.\n 2.4 The Complainant  Sukhdev was referred to the District Hospital, Guna wherein XRay of his chest region was conducted by P.W. 8  Dr.\n       Raghuvanshi. The Report states that there was \"haziness in lungs, left side of chest, present due to trauma of chest\".\n               Dr. Raghuvanshi  P.W. 8 stated in his deposition that the lungs of the Complainant  Sukhdev suffered injury, which resulted in blood seeping in the lungs, leading to haziness in the X Ray image.\n 2.5 On 24.11.1997, the Accused /Respondent Nos. 1 and 2 were arrested by the Police. The weapon of offence i.e. the knife allegedly used by Accused /Respondent No. 1 was recovered from the bushes next to the bridge, on the statement given by Accused /Respondent No. 1.\n 2" }
     #   }
     # ]
-    prediction_input_ls_format = json.load(open(custom_data_path))
-    #prediction_input_ls_format = json.load(open(prediction_input_files_path))
-    nlp = get_spacy_nlp_pipeline_for_indian_legal_text(
-        model_name="en_core_web_trf",
-        disable=["attribute_ruler", "lemmatizer", 'ner'])
-    BERT_VOCAB = "nlpaueb/legal-bert-base-uncased"
-    BERT_MODEL = "nlpaueb/legal-bert-base-uncased"
+    import re
+    text = get_text_from_indiankanoon_url('https://indiankanoon.org/doc/82089984/')
+    nlp_preamble = get_spacy_nlp_pipeline_for_preamble()
+    preamble_text, preamble_end = seperate_and_clean_preamble(text, nlp_preamble)
+    judgement_text = text[preamble_end:]
+    judgement_text = re.sub(r'([^.\"\?])\n+ *', r'\1 ', judgement_text)
+    # logger.info("Received text: '%s'", sentences)
+    input_ls_format = [
+        {'id': id, 'data': {'preamble_text': preamble_text, 'judgement_text': judgement_text,
+                            'text': preamble_text + " " + judgement_text}}]
 
-    tokenizer = AutoTokenizer.from_pretrained(BERT_VOCAB)
+    #prediction_input_ls_format = json.load(open(custom_data_path))
+    # prediction_input_ls_format = json.load(open(prediction_input_files_path))
+    nlp = get_spacy_nlp_pipeline_for_indian_legal_text(model_name="en_core_web_trf",
+                                                       disable=["attribute_ruler", "lemmatizer", 'ner'])
+    BERT_VOCAB = "bert-base-uncased"
+    BERT_MODEL = "bert-base-uncased"
+
+    tokenizer = BertTokenizer.from_pretrained(BERT_VOCAB, do_lower_case=True)
 
     MAX_DOCS = -1
 
-    split_into_sentences_tokenize_write(prediction_input_ls_format,
-                                        custom_processed_data_path, nlp)
+    split_into_sentences_tokenize_write(input_ls_format, '/', nlp)

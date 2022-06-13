@@ -16,7 +16,6 @@ def calc_classification_metrics(y_true, y_predicted, labels):
     class_report = classification_report(y_true, y_predicted, digits=4)
     confusion_abs = confusion_matrix(y_true, y_predicted, labels=labels)
     # normalize confusion matrix
-    np.seterr(divide='ignore', invalid='ignore')
     confusion = np.around(confusion_abs.astype('float') / confusion_abs.sum(axis=1)[:, np.newaxis] * 100, 2)
     return {"acc": acc,
             "macro-f1": macro_f1,
@@ -59,7 +58,7 @@ def eval_model(model, eval_batches, device, task):
             output = model(batch=batch)
 
             true_labels_batch, predicted_labels_batch = \
-                clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
+                clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels, output["sentence_embeddings"].view(-1))
 
             docwise_true_labels.append(true_labels_batch)
             docwise_predicted_labels.append(predicted_labels_batch)
@@ -79,15 +78,21 @@ def eval_model(model, eval_batches, device, task):
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
     return metrics, confusion,labels_dict, class_report
 
-
-def clear_and_map_padded_values(true_labels, predicted_labels, labels):
+'''
+Params:
+    true_labels, predicted_labels: label IDs
+    labels: array of labels with IDs
+'''
+def clear_and_map_padded_values(true_labels, predicted_labels, labels, embeddings):
     assert len(true_labels) == len(predicted_labels)
     cleared_predicted = []
     cleared_true = []
-    for true_label, predicted_label in zip(true_labels, predicted_labels):
+    cleared_embedding = []
+    for true_label, predicted_label, embedding in zip(true_labels, predicted_labels, embeddings):
         # filter masked labels (0)
         if true_label > 0:
             cleared_true.append(labels[true_label])
             cleared_predicted.append(labels[predicted_label])
-    return cleared_true, cleared_predicted
+            cleared_embedding.append(embedding)
+    return cleared_true, cleared_predicted, cleared_embedding
 
