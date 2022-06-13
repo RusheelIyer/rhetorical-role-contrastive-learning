@@ -215,12 +215,17 @@ class BertHSLN(torch.nn.Module):
 
         return torch.exp(total)
 
-    def calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels):
+    def calculate_contrastive_loss(self, sentence_embeddings_encoded, documents, labels):
         positives_per_label = {}
 
-        for label in list(set(labels)):
+        label_list = labels.tolist()[0]
+
+        for label in list(set(label_list)):
+            positives_per_label[label] = []
+
+        for label in list(set(label_list)):
             for i in range(documents):
-                indices = [j for j, x in enumerate(labels) if x == label]
+                indices = [j for j, x in enumerate(label_list) if x == label]
                 positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
 
         loss = 0
@@ -228,7 +233,7 @@ class BertHSLN(torch.nn.Module):
         cos = torch.nn.CosineSimilarity()
         for i in range(documents):
             for embedding in sentence_embeddings_encoded[i]:
-                label = labels[label_id]
+                label = label_list[label_id]
                 label_id += 1
 
                 positives = positives_per_label[label]
@@ -285,7 +290,7 @@ class BertHSLN(torch.nn.Module):
         classification_loss = output["loss"]
 
         cl_lambda = 0.2
-        contrastive_loss = calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels)
+        contrastive_loss = self.calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels)
 
         print(contrastive_loss)
 
