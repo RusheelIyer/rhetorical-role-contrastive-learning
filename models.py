@@ -205,7 +205,7 @@ class BertHSLN(torch.nn.Module):
         else:
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
 
-    def get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents):
+    def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, documents):
         total = 0
 
         for i in range(documents):
@@ -230,7 +230,7 @@ class BertHSLN(torch.nn.Module):
 
         loss = 0
         label_id = 0
-        cos = torch.nn.CosineSimilarity()
+        cos = torch.nn.CosineSimilarity(dim=0)
         for i in range(documents):
             for embedding in sentence_embeddings_encoded[i]:
                 label = label_list[label_id]
@@ -242,18 +242,16 @@ class BertHSLN(torch.nn.Module):
                 similarity_sum = 0
                 for positive in positives:
                     similarity = torch.exp(cos(embedding, positive))
-                    similarity /= get_anchor_similarity(cos, embedding, sentence_embeddings_encoded)
+                    similarity /= self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents)
                     similarity_sum += torch.log(similarity)
 
                 loss += (-1/num_positives) * similarity_sum
 
-        return loss
+        return torch.norm(loss)
 
     def forward(self, batch, labels=None, output_all_tasks=False):
 
         documents, sentences, tokens = batch["input_ids"].shape
-
-        print("Label Shape: ", labels.shape)
 
         # shape (documents*sentences, tokens, 768)
         bert_embeddings = self.bert(batch)
