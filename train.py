@@ -42,19 +42,21 @@ class SentenceClassificationTrainer:
         self.result_writer.write(json.dumps(self.cur_result))
 
 
-    def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, documents):
+    def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, temperature, documents):
         total = torch.zeros_like(embedding)
 
         for i in range(documents):
             for sentence in sentence_embeddings_encoded[i]:
                 # TODO: Add distance weight here
-                total = torch.add(total, cos(embedding, sentence))
+                similarity = torch.div(cos(embedding, sentence), temperature)
+                total = torch.add(total, torch.exp(similarity))
 
-        return torch.exp(total)
+        return total
 
     def add_contrast_loss(self, batch, sentence_embeddings_encoded, classification_loss):
         labels = batch["label_ids"]
         documents = batch["input_ids"].shape[0]
+        temperature = 0.1
         
         positives_per_label = {}
         label_list = labels.tolist()[0]
@@ -80,19 +82,20 @@ class SentenceClassificationTrainer:
                 
                 similarity_sum = torch.zeros_like(loss)
                 for positive in positives:
-                    similarity = torch.exp(cos(embedding, positive))
-                    similarity = torch.div(similarity, self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents))
+                    similarity = torch.exp(torch.div(cos(embedding, positive), temperature))
+                    similarity = torch.div(similarity, self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, temperature, documents))
                     similarity_sum = torch.add(similarity_sum, torch.log(similarity))
 
-                loss = torch.add(loss, (-1/num_positives) * similarity_sum)
+                loss = torch.add(loss, torch.mul((-1/num_positives), similarity_sum))
 
         loss = torch.norm(loss)
-        print(classification_loss)
-        print(loss)
+        print(">>>>>>>>>>>>>>>>>>>> Classification Loss: ", classification_loss)
+        print(">>>>>>>>>>>>>>>>>>>> Contrastive Loss: ", loss)
 
         cl_lambda = 0.2
         loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, loss))
-        print(loss)
+        
+        print(">>>>>>>>>>>>>>>>>>>> Total Loss: ", loss)
 
         return loss
 
