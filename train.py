@@ -42,6 +42,60 @@ class SentenceClassificationTrainer:
         self.result_writer.write(json.dumps(self.cur_result))
 
 
+    def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, documents):
+        total = torch.zeros_like(sentence_embeddings[0][0])
+
+        for i in range(documents):
+            for sentence in sentence_embeddings_encoded[i]:
+                # TODO: Add distance weight here
+                total = torch.add(total, cos(embedding, sentence))
+
+        return torch.exp(total)
+
+    def add_contrast_loss(self, batch, sentence_embeddings_encoded, classification_loss):
+        labels = batch["label_ids"]
+        documents = batch["input_ids"].shape[0]
+        
+        positives_per_label = {}
+        label_list = labels.tolist()[0]
+
+        for label in list(set(label_list)):
+            positives_per_label[label] = []
+
+        for label in list(set(label_list)):
+            for i in range(documents):
+                indices = [j for j, x in enumerate(label_list) if x == label]
+                positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
+
+        loss = torch.zeros_like(sentence_embeddings[0][0])
+        label_id = 0
+        cos = torch.nn.CosineSimilarity(dim=0)
+        for i in range(documents):
+            for embedding in sentence_embeddings_encoded[i]:
+                label = label_list[label_id]
+                label_id += 1
+
+                positives = positives_per_label[label]
+                num_positives = len(positives)
+                
+                similarity_sum = torch.zeros_like(loss)
+                for positive in positives:
+                    similarity = torch.exp(cos(embedding, positive))
+                    similarity = torch.div(similarity, self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents))
+                    similarity_sum = torch.add(similarity_sum, torch.log(similarity))
+
+                loss = torch.add(loss, (-1/num_positives) * similarity_sum)
+
+        loss = torch.norm(loss)
+        print(classification_loss)
+        print(loss)
+
+        cl_lambda = 0.2
+        loss = torch.sum(torch.mul(1-cl_lambda,classification_loss),torch.mul(cl_lambda,contrastive_loss))
+        print(loss)
+
+        return loss
+
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
         self.result_writer.log(f'device: {self.device}')
@@ -95,6 +149,14 @@ class SentenceClassificationTrainer:
             self.result_writer.log(f'training model for fold {fold_num} in epoch {epoch} ...')
 
             random.shuffle(train_batches)
+
+            activation = {}
+            def get_activation(name):
+                def hook(model, input, output):
+                    activation[name] = output.detach()
+                return hook
+            
+            model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
@@ -105,8 +167,10 @@ class SentenceClassificationTrainer:
                     batch=batch,
                     labels=batch["label_ids"]
                 )
+                sentence_embeddings = activation['sentence_lstm']
+
                 loss = output["loss"]
-                loss = loss.sum()
+                loss = self.add_contrast_loss(batch, sentence_embeddings, loss.sum())
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()

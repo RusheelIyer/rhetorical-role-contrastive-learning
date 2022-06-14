@@ -205,50 +205,6 @@ class BertHSLN(torch.nn.Module):
         else:
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
 
-    def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, documents):
-        total = 0
-
-        for i in range(documents):
-            for sentence in sentence_embeddings_encoded[i]:
-                # TODO: Add weight here
-                total += cos(embedding, sentence)
-
-        return torch.exp(total)
-
-    def calculate_contrastive_loss(self, sentence_embeddings_encoded, documents, labels):
-        positives_per_label = {}
-
-        label_list = labels.tolist()[0]
-
-        for label in list(set(label_list)):
-            positives_per_label[label] = []
-
-        for label in list(set(label_list)):
-            for i in range(documents):
-                indices = [j for j, x in enumerate(label_list) if x == label]
-                positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
-
-        loss = 0
-        label_id = 0
-        cos = torch.nn.CosineSimilarity(dim=0)
-        for i in range(documents):
-            for embedding in sentence_embeddings_encoded[i]:
-                label = label_list[label_id]
-                label_id += 1
-
-                positives = positives_per_label[label]
-                num_positives = len(positives)
-                
-                similarity_sum = 0
-                for positive in positives:
-                    similarity = torch.exp(cos(embedding, positive))
-                    similarity /= self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, documents)
-                    similarity_sum += torch.log(similarity)
-
-                loss += (-1/num_positives) * similarity_sum
-
-        return torch.norm(loss)
-
     def forward(self, batch, labels=None, output_all_tasks=False):
 
         documents, sentences, tokens = batch["input_ids"].shape
@@ -283,16 +239,6 @@ class BertHSLN(torch.nn.Module):
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
-
-
-        classification_loss = output["loss"]
-
-        cl_lambda = 0.2
-        contrastive_loss = self.calculate_contrastive_loss(sentence_embeddings_encoded, documents, labels)
-
-        print(contrastive_loss)
-
-        output["loss"] = ((1-cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
 
         return output
 
