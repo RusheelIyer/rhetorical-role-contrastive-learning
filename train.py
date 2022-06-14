@@ -43,7 +43,7 @@ class SentenceClassificationTrainer:
 
 
     def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, documents):
-        total = torch.zeros_like(sentence_embeddings[0][0])
+        total = torch.zeros_like(embedding)
 
         for i in range(documents):
             for sentence in sentence_embeddings_encoded[i]:
@@ -67,7 +67,7 @@ class SentenceClassificationTrainer:
                 indices = [j for j, x in enumerate(label_list) if x == label]
                 positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
 
-        loss = torch.zeros_like(sentence_embeddings[0][0])
+        loss = torch.zeros_like(sentence_embeddings_encoded[0][0])
         label_id = 0
         cos = torch.nn.CosineSimilarity(dim=0)
         for i in range(documents):
@@ -91,7 +91,7 @@ class SentenceClassificationTrainer:
         print(loss)
 
         cl_lambda = 0.2
-        loss = torch.sum(torch.mul(1-cl_lambda,classification_loss),torch.mul(cl_lambda,contrastive_loss))
+        loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, loss))
         print(loss)
 
         return loss
