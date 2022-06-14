@@ -24,10 +24,7 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
 
     folds = task.get_folds()
     test_batches = folds[0].test
-    metrics, confusion, labels_dict, class_report, sentence_embeddings = eval_model(model, test_batches, device, task)
-
-    # Save the sentence embeddings to external file
-    torch.save(sentence_embeddings, 'datasets/embeddings.pt')
+    metrics, confusion, labels_dict, class_report = eval_model(model, test_batches, device, task)
 
     # Save the true and predicted labels to external file
     with open(r'datasets/pred_labels.txt', 'w') as fp:

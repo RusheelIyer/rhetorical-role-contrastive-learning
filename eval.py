@@ -93,7 +93,11 @@ def eval_model(model, eval_batches, device, task):
     labels_dict['doc_names'] = doc_name_list
     metrics, confusion, class_report = \
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
-    return metrics, confusion, labels_dict, class_report, sentence_embeddings
+
+    # Save the sentence embeddings to external file
+    torch.save(sentence_embeddings, 'datasets/embeddings.pt')
+    
+    return metrics, confusion, labels_dict, class_report
 
 '''
 Params:
