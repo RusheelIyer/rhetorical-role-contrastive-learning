@@ -89,13 +89,8 @@ class SentenceClassificationTrainer:
                 loss = torch.add(loss, torch.mul((-1/num_positives), similarity_sum))
 
         loss = torch.norm(loss)
-        print(">>>>>>>>>>>>>>>>>>>> Classification Loss: ", classification_loss)
-        print(">>>>>>>>>>>>>>>>>>>> Contrastive Loss: ", loss)
-
-        cl_lambda = 0.2
+        cl_lambda = 0.1
         loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, loss))
-        
-        print(">>>>>>>>>>>>>>>>>>>> Total Loss: ", loss)
 
         return loss
 
