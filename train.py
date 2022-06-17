@@ -11,6 +11,7 @@ import models
 import numpy as np
 import os
 
+from losses import SupConLoss
 from eval import eval_model
 from utils import tensor_dict_to_gpu, tensor_dict_to_cpu, ResultWriter, get_num_model_parameters, print_model_parameters
 from task import Task, Fold
@@ -89,8 +90,6 @@ class SentenceClassificationTrainer:
                 loss = torch.add(loss, torch.mul((-1/num_positives), similarity_sum))
 
         loss = torch.norm(loss)
-        cl_lambda = 0.1
-        loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, loss))
 
         return loss
 
@@ -167,8 +166,12 @@ class SentenceClassificationTrainer:
                 )
                 sentence_embeddings = activation['sentence_lstm']
 
-                loss = output["loss"]
-                loss = self.add_contrast_loss(batch, sentence_embeddings, loss.sum())
+                classification_loss = output["loss"].sum()
+                contrastive_loss = SupConLoss(batch, sentence_embeddings)
+                
+                cl_lambda = 0.1
+                loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, contrastive_loss))
+                
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()
