@@ -7,7 +7,7 @@ class SupConLoss(nn.Module):
         super(SupConLoss, self).__init__()
         self.temperature = temperature
 
-	"""
+    """
     Compute loss for model. If both `labels` and `mask` are None,
     it degenerates to SimCLR unsupervised loss:
     https://arxiv.org/pdf/2002.05709.pdf
