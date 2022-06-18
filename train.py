@@ -337,4 +337,3 @@ class SentenceClassificationMultitaskTrainer:
                 self.result_writer.log(f'epoch: {epoch}, mean weighted-F1 dev score: {weighted_f1_avg}')
 
             epoch += 1
-
