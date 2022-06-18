@@ -30,6 +30,7 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
+        self.supconloss = SupConLoss()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -167,7 +168,7 @@ class SentenceClassificationTrainer:
                 sentence_embeddings = activation['sentence_lstm']
 
                 classification_loss = output["loss"].sum()
-                contrastive_loss = SupConLoss(batch, sentence_embeddings)
+                contrastive_loss = self.supconloss(batch, sentence_embeddings)
                 
                 cl_lambda = 0.1
                 loss = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, contrastive_loss))

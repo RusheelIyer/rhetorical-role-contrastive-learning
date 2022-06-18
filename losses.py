@@ -22,17 +22,16 @@ class SupConLoss(nn.Module):
     def forward(self, batch, features):
 
         device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
-
         documents, sentences, _ = batch["input_ids"].shape
-        labels = torch.Tensor(batch["label_ids"])
-        features = features.to(device)
+        labels = batch["label_ids"].to(device)
+        features=features[0]
 
         if labels is not None:
             mask = torch.eq(labels, labels.T).float()
             logits_mask = torch.scatter(
-                torch.ones_like(mask),
+                torch.ones_like(mask).to(device),
                 1,
-                torch.arange(sentences * 1).view(-1, 1),
+                torch.arange(sentences * 1).view(-1, 1).to(device),
                 0
             )
             mask = (mask * logits_mask).to(device)
@@ -51,7 +50,7 @@ class SupConLoss(nn.Module):
 
         numerator = torch.exp(cos_similarity_matrix * mask).to(device)
 
-        denom = (torch.exp(anchor_dot_contrast)*logits_mask).sum(1)
+        denom = (torch.exp(cos_similarity_matrix)*logits_mask).sum(1)
         denom = denom.view(-1,1).repeat(1,sentences).to(device)
 
         log_prob = (torch.log(torch.div(numerator, denom))*mask).to(device)
