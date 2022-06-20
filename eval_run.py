@@ -120,6 +120,7 @@ def create_generic_task(task_name):
 def get_all_tasks():
     result = []
     result.append(pubmed_task(train_batch_size=-1, max_docs=-1))
+    """
     result.append(pubmed_task_small(train_batch_size=-1, max_docs=-1))
     result.append(nicta_task(train_batch_size=-1, max_docs=-1))
     result.append(dri_task(train_batch_size=-1, max_docs=-1))
@@ -130,6 +131,7 @@ def get_all_tasks():
     result.append(create_generic_task(GEN_PMD_TASK))
     result.append(create_generic_task(GEN_NIC_TASK))
     result.append(create_generic_task(GEN_ART_TASK))
+    """
 
     return result
 
