@@ -42,57 +42,6 @@ class SentenceClassificationTrainer:
         self.cur_result["test_confusion"] = test_confusion
 
         self.result_writer.write(json.dumps(self.cur_result))
-
-
-    """def get_anchor_similarity(self, cos, embedding, sentence_embeddings_encoded, temperature, documents):
-        total = torch.zeros_like(embedding)
-
-        for i in range(documents):
-            for sentence in sentence_embeddings_encoded[i]:
-                # TODO: Add distance weight here
-                similarity = torch.div(cos(embedding, sentence), temperature)
-                total = torch.add(total, torch.exp(similarity))
-
-        return total
-
-    def add_contrast_loss(self, batch, sentence_embeddings_encoded, classification_loss):
-        labels = batch["label_ids"]
-        documents = batch["input_ids"].shape[0]
-        temperature = 0.1
-        
-        positives_per_label = {}
-        label_list = labels.tolist()[0]
-
-        for label in list(set(label_list)):
-            positives_per_label[label] = []
-
-        for label in list(set(label_list)):
-            for i in range(documents):
-                indices = [j for j, x in enumerate(label_list) if x == label]
-                positives_per_label[label].append(sentence_embeddings_encoded[i][indices])
-
-        loss = torch.zeros_like(sentence_embeddings_encoded[0][0])
-        label_id = 0
-        cos = torch.nn.CosineSimilarity(dim=0)
-        for i in range(documents):
-            for embedding in sentence_embeddings_encoded[i]:
-                label = label_list[label_id]
-                label_id += 1
-
-                positives = positives_per_label[label]
-                num_positives = len(positives)
-                
-                similarity_sum = torch.zeros_like(loss)
-                for positive in positives:
-                    similarity = torch.exp(torch.div(cos(embedding, positive), temperature))
-                    similarity = torch.div(similarity, self.get_anchor_similarity(cos, embedding, sentence_embeddings_encoded, temperature, documents))
-                    similarity_sum = torch.add(similarity_sum, torch.log(similarity))
-
-                loss = torch.add(loss, torch.mul((-1/num_positives), similarity_sum))
-
-        loss = torch.norm(loss)
-
-        return loss"""
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 

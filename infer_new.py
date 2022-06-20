@@ -26,6 +26,13 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
     test_batches = folds[0].test
     metrics, confusion, labels_dict, class_report = eval_model(model, test_batches, device, task)
 
+    print(metrics)
+    print('------------------------------------')
+    print(confusion)
+    print('------------------------------------')
+    print(class_report)
+    print('------------------------------------')
+
     # Save the true and predicted labels to external file
     with open(r'datasets/pred_labels.txt', 'w') as fp:
         fp.write('\n'.join(labels_dict['y_predicted']))
@@ -101,7 +108,7 @@ if __name__=="__main__":
 
     
     hsln_format_txt_dirpath ='datasets/pubmed-20k'
-    write_in_hsln_format(input_dir,hsln_format_txt_dirpath,tokenizer)
+    # write_in_hsln_format(input_dir,hsln_format_txt_dirpath,tokenizer)
     filename_sent_boundries = json.load(open(hsln_format_txt_dirpath + '/sentece_boundries.json'))
     predictions = infer(model_path, MAX_DOCS, prediction_output_json_path, device)
     
