@@ -10,7 +10,6 @@ MAX_SEQ_LENGTH = 128
 
 def write_in_hsln_format(input,hsln_format_txt_dirpath,tokenizer):
 
-
     final_string = ''
     filename_sent_boundries = {}
     for file in input:
@@ -31,9 +30,6 @@ def write_in_hsln_format(input,hsln_format_txt_dirpath,tokenizer):
         final_string = final_string + "\n"
     with open(hsln_format_txt_dirpath , "w+") as file:
         file.write(final_string)
-
-
-
 
 def tokenize():
     [_, train_input_json,dev_input_json,test_input_json] = sys.argv
