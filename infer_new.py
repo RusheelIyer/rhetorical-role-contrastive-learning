@@ -98,13 +98,10 @@ if __name__=="__main__":
         "max_seq_length": 128,
         "max_epochs": 40,
         "early_stopping": 5,
-
     }
-
 
     MAX_DOCS = -1
     device = get_device(0)
-
     
     hsln_format_txt_dirpath ='datasets/pubmed-20k'
     write_in_hsln_format(input_dir,hsln_format_txt_dirpath,tokenizer)

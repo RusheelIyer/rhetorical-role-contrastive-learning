@@ -35,6 +35,7 @@ config = {
     "max_seq_length": 128,
     "max_epochs": 20,
     "early_stopping": 5,
+    "use_contrastive": True,
 
 }
 
