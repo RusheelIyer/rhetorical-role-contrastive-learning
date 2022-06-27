@@ -54,17 +54,17 @@ def write_in_hsln_format(input_json,hsln_format_txt_dirpath,tokenizer):
             filename_sent_boundries[file_name]['sentence_span'].append([annotation['value']['start'],annotation['value']['end']])
 
             sentence_txt=annotation['value']['text']
-            sentence_label = annotation['value']['labels'][0]
             sentence_txt = sentence_txt.replace("\r", "")
             if sentence_txt.strip() != "":
                 sent_tokens = tokenizer.encode(sentence_txt, add_special_tokens=True, max_length=128)
                 sent_tokens = [str(i) for i in sent_tokens]
                 sent_tokens_txt = " ".join(sent_tokens)
-                final_string = final_string + sentence_label + "\t" + sent_tokens_txt + "\n"
+                final_string = final_string + "NONE" + "\t" + sent_tokens_txt + "\n"
         final_string = final_string + "\n"
 
     with open(hsln_format_txt_dirpath + '/test_scibert.txt', "w+") as file:
         file.write(final_string)
+
     with open(hsln_format_txt_dirpath + '/train_scibert.txt', "w+") as file:
         file.write(final_string)
     with open(hsln_format_txt_dirpath + '/dev_scibert.txt', "w+") as file:
