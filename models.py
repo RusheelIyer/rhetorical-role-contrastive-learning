@@ -6,7 +6,6 @@ import copy
 from transformers import BertModel
 
 from allennlp.modules import ConditionalRandomField
-from losses import SupConLoss
 
 import torch
 
@@ -187,7 +186,6 @@ class BertHSLN(torch.nn.Module):
         self.init_sentence_enriching(config, tasks)
 
         self.reinit_output_layer(tasks, config)
-        self.SupCon = SupConLoss(self.lstm_hidden_size, 128)
 
 
     def init_sentence_enriching(self, config, tasks):
@@ -242,11 +240,7 @@ class BertHSLN(torch.nn.Module):
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
-        contrastive_loss = None
-        if (self.config["use_contrastive"]):
-            contrastive_loss = self.SupCon(batch, sentence_embeddings_encoded)
-
-        return output, contrastive_loss
+        return output
 
 
 class BertHSLNMultiSeparateLayers(torch.nn.Module):
