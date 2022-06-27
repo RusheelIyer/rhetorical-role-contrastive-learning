@@ -66,6 +66,7 @@ class SentenceClassificationTrainer:
         self.cur_result["model"] = model.__class__.__name__
 
         model.to(self.device)
+        self.SupCon.to(self.device)
 
         max_train_epochs = self.config["max_epochs"]
         lr = self.config["lr"]
@@ -119,7 +120,7 @@ class SentenceClassificationTrainer:
 
                 if (self.config["use_contrastive"]):
                     cl_lambda = 0.2
-                    contrastive_loss = self.SupCon(batch, sentence_embeddings_encoded)
+                    contrastive_loss = self.SupCon(batch, sentence_embeddings)
                     loss = torch.add(torch.mul(1-cl_lambda, loss),torch.mul(cl_lambda, contrastive_loss))
                 
                 loss.backward()
