@@ -240,168 +240,20 @@ class BertHSLN(torch.nn.Module):
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
-        return output
+        return output, sentence_embeddings_encoded
 
-
-class BertHSLNMultiSeparateLayers(torch.nn.Module):
-    '''
-    Model Multi-Task Learning, where only certail layers are shared.
-    This class is necessary to separate the model on two GPUs.
-    '''
+class SupConBertHSLN(nn.Module):
+    """BertHSLN + projection head"""
     def __init__(self, config, tasks):
-        super(BertHSLNMultiSeparateLayers, self).__init__()
+        super(SupConBertHSLN, self).__init__()
+        self.model = BertHSLN(config, tasks)
+        self.head = nn.Sequential(
+                nn.Linear(config["dim_in"], config["dim_in"]),
+                nn.ReLU(inplace=True),
+                nn.Linear(config["dim_in"], config["feat_dim"])
+            )
 
-
-        self.bert = BertTokenEmbedder(config)
-
-
-        # Jin et al. uses DROPOUT WITH EXPECTATION-LINEAR REGULARIZATION (see Ma et al. 2016),
-        # we use instead default dropout
-        self.dropout = torch.nn.Dropout(config["dropout"])
-
-        self.lstm_hidden_size = config["word_lstm_hs"]
-
-        self.word_lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(input_size=self.bert.bert_hidden_size,
-                                                             hidden_size=self.lstm_hidden_size,
-                                                             num_layers=1, batch_first=True, bidirectional=True))
-
-        self.attention_pooling = PerTaskGroupWrapper(
-                                        task_groups=config["attention_groups"],
-                                        create_module_func=lambda g:
-                                            AttentionPooling(2 * self.lstm_hidden_size,
-                                                  dimension_context_vector_u=config["att_pooling_dim_ctx"],
-                                                  number_context_vectors=config["att_pooling_num_ctx"])
-                                )
-
-        attention_pooling_output_dim = next(iter(self.attention_pooling.per_task_mod.values())).output_dim
-        self.sentence_lstm = PerTaskGroupWrapper(
-                                    task_groups=config["context_enriching_groups"],
-                                    create_module_func=lambda g:
-                                    PytorchSeq2SeqWrapper(torch.nn.LSTM(input_size=attention_pooling_output_dim,
-                                        hidden_size=self.lstm_hidden_size,
-                                        num_layers=1, batch_first=True, bidirectional=True))
-                                    )
-
-        self.crf = CRFPerTaskGroupOutputLayer(self.lstm_hidden_size * 2, tasks, config["output_groups"])
-
-
-
-    def to_device(self, device1, device2):
-        self.bert.to(device1)
-        self.word_lstm.to(device1)
-        self.attention_pooling.to_device(device1, device2)
-        self.sentence_lstm.to_device(device1, device2)
-        self.crf.to_device(device1, device2)
-        self.device1 = device1
-        self.device2 = device2
-
-    def forward(self, batch, labels=None, output_all_tasks=False):
-        task_name = batch["task"]
-        documents, sentences, tokens = batch["input_ids"].shape
-
-        # shape (documents*sentences, tokens, 768)
-        bert_embeddings = self.bert(batch)
-
-        # in Jin et al. only here dropout
-        bert_embeddings = self.dropout(bert_embeddings)
-
-        tokens_mask = batch["attention_mask"].view(-1, tokens)
-        # shape (documents*sentences, tokens, 2*lstm_hidden_size)
-        bert_embeddings_encoded = self.word_lstm(bert_embeddings, tokens_mask)
-
-        # shape (documents*sentences, pooling_out)
-        # sentence_embeddings = torch.mean(bert_embeddings_encoded, dim=1)
-        device = self.attention_pooling.get_device(task_name)
-        sentence_embeddings = self.attention_pooling(task_name, bert_embeddings_encoded.to(device), tokens_mask.to(device))
-        # shape: (documents, sentences, pooling_out)
-        sentence_embeddings = sentence_embeddings.view(documents, sentences, -1)
-        # in Jin et al. only here dropout
-        sentence_embeddings = self.dropout(sentence_embeddings)
-
-        sentence_mask = batch["sentence_mask"]
-        # shape: (documents, sentence, 2*lstm_hidden_size)
-        device = self.sentence_lstm.get_device(task_name)
-        sentence_embeddings_encoded = self.sentence_lstm(task_name, sentence_embeddings.to(device), sentence_mask.to(device))
-        # in Jin et al. only here dropout
-        sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
-
-        device = self.crf.get_device(task_name)
-        if labels is not None:
-            labels = labels.to(device)
-
-        output = self.crf(task_name, sentence_embeddings_encoded.to(device), sentence_mask.to(device), labels, output_all_tasks)
-
-        return output
-
-class CRFPerTaskGroupOutputLayer(torch.nn.Module):
-    ''' CRF output layer consisting of a linear layer and a CRF. '''
-    def __init__(self, in_dim, tasks, task_groups):
-        super(CRFPerTaskGroupOutputLayer, self).__init__()
-
-        def get_task(name):
-            for t in tasks:
-                if t.task_name == name:
-                    return t
-
-        self.crf = PerTaskGroupWrapper(
-                                        task_groups=task_groups,
-                                        create_module_func=lambda g:
-                                            # we assume same labels per group
-                                            CRFOutputLayer(in_dim=in_dim, num_labels=len(get_task(g[0]).labels))
-        )
-        self.all_tasks = [t for t in [g for g in task_groups]]
-
-
-    def forward(self, task, x, mask, labels=None, output_all_tasks=False):
-        ''' x: shape: batch, max_sequence, in_dim
-            mask: shape: batch, max_sequence
-            labels: shape: batch, max_sequence
-        '''
-        output = self.crf(task, x, mask, labels)
-        if output_all_tasks:
-            output["task_outputs"] = []
-            assert labels is None
-            for task in self.self.all_tasks:
-                task_result = self.crf(task, x, mask, labels)
-                task_result["task"] = task
-                output["task_outputs"].append(task_result)
-        return output
-
-    def to_device(self, device1, device2):
-        self.crf.to_device(device1, device2)
-
-    def get_device(self, task):
-        return self.crf.get_device(task)
-
-
-class PerTaskGroupWrapper(torch.nn.Module):
-    def __init__(self, task_groups, create_module_func):
-        super(PerTaskGroupWrapper, self).__init__()
-
-        self.per_task_mod = torch.nn.ModuleDict()
-        for g in task_groups:
-            mod = create_module_func(g)
-            for t in g:
-                self.per_task_mod[t] = mod
-
-        self.task_groups = task_groups
-
-    def forward(self, task_name, *args):
-        mod = self.per_task_mod[task_name]
-        return mod(*args)
-
-    def to_device(self, device1, device2):
-        self.task_to_device = dict()
-        for index, tasks in enumerate(self.task_groups):
-            for task in tasks:
-                if index % 2 == 0:
-                    self.task_to_device[task] = device1
-                    self.per_task_mod[task].to(device1)
-                else:
-                    self.task_to_device[task] = device2
-                    self.per_task_mod[task].to(device2)
-
-    def get_device(self, task):
-        return self.task_to_device[task]
-
-
+    def forward(self, x):
+        output, features = self.model(x)
+        features = F.normalize(self.head(features), dim=2)
+        return features

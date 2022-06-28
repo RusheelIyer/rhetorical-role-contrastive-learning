@@ -3,24 +3,15 @@ import torch.nn as nn
 
 class SupConLoss(nn.Module):
     
-    def __init__(self, dim_in, feat_dim, temperature=0.07):
+    def __init__(self, temperature=0.07):
         super(SupConLoss, self).__init__()
         self.temperature = temperature
-        self.head = nn.Sequential(
-                nn.Linear(dim_in, dim_in),
-                nn.ReLU(inplace=True),
-                nn.Linear(dim_in, feat_dim)
-            )
 
     """
-    Compute loss for model. If both `labels` and `mask` are None,
-    it degenerates to SimCLR unsupervised loss:
-    https://arxiv.org/pdf/2002.05709.pdf
+    Compute loss for model.
     Args:
+        batch: ground truth
         features: hidden vector of shape [bsz, n_views, ...].
-        labels: ground truth of shape [bsz].
-        mask: contrastive mask of shape [bsz, bsz], mask_{i,j}=1 if sample j
-            has the same class as sample i. Can be asymmetric.
     Returns:
         A loss scalar.
     """
@@ -29,8 +20,6 @@ class SupConLoss(nn.Module):
         device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
         documents, sentences, _ = batch["input_ids"].shape
         labels = batch["label_ids"].to(device)
-
-        features=F.normalize(self.head(features), dim=2)
 
         if labels is not None:
             mask = torch.eq(labels, labels.T).float()

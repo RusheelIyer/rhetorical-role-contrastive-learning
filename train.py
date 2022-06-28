@@ -29,7 +29,7 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
-        self.SupCon = SupConLoss(config["word_lstm_hs"] * 2, 128)
+        self.SupCon = SupConLoss()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -110,18 +110,16 @@ class SentenceClassificationTrainer:
                 # move tensor to gpu
                 tensor_dict_to_gpu(batch, self.device)
 
-                output = model(
+                output, sentence_embeddings = model(
                     batch=batch,
                     labels=batch["label_ids"]
                 )
-                sentence_embeddings = activation['sentence_lstm']
+                #sentence_embeddings = activation['sentence_lstm']
 
                 loss = output["loss"].sum()
-
-                if (self.config["use_contrastive"]):
-                    cl_lambda = 0.2
-                    contrastive_loss = self.SupCon(batch, sentence_embeddings)
-                    loss = torch.add(torch.mul(1-cl_lambda, loss),torch.mul(cl_lambda, contrastive_loss))
+                cl_lambda = 0.2
+                contrastive_loss = self.SupCon(batch, sentence_embeddings)
+                loss = torch.add(torch.mul(1-cl_lambda, loss),torch.mul(cl_lambda, contrastive_loss))
                 
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)

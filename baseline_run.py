@@ -9,7 +9,7 @@ from eval_run import eval_and_save_metrics
 from utils import get_device, ResultWriter, log
 from task import pubmed_task
 from train import SentenceClassificationTrainer
-from models import BertHSLN
+from models import BertHSLN, SupConBertHSLN
 import os
 
 # BERT_VOCAB = "bert-base-uncased"
@@ -21,7 +21,7 @@ BERT_MODEL = "bert-base-uncased"
 config = {
     "bert_model": BERT_MODEL,
     "bert_trainable": False,
-    "model": BertHSLN.__name__,
+    "model": SupConBertHSLN.__name__,
     "cacheable_tasks": [],
 
     "dropout": 0.5,
@@ -35,7 +35,8 @@ config = {
     "max_seq_length": 128,
     "max_epochs": 20,
     "early_stopping": 5,
-    "use_contrastive": True,
+    "dim_in": 2*758,
+    "feat_dim": 128,
 
 }
 
