@@ -1,7 +1,6 @@
 from prettytable import PrettyTable
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from losses import SupConLoss
 
 import torch
 import random
@@ -66,7 +65,6 @@ class SentenceClassificationTrainer:
         self.cur_result["model"] = model.__class__.__name__
 
         model.to(self.device)
-        self.SupCon.to(self.device)
 
         max_train_epochs = self.config["max_epochs"]
         lr = self.config["lr"]
@@ -103,22 +101,20 @@ class SentenceClassificationTrainer:
                     activation[name] = output.detach()
                 return hook
             
+            # model.sentence_lstm.register_forward_hook(get_activation('head'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
                 # move tensor to gpu
                 tensor_dict_to_gpu(batch, self.device)
 
-                output, sentence_embeddings = model(
+                output = model(
                     batch=batch,
                     labels=batch["label_ids"]
                 )
+                # sentence_embeddings = activation['head']
 
                 loss = output["loss"].sum()
-                cl_lambda = 0.2
-                contrastive_loss = self.SupCon(batch, sentence_embeddings)
-                loss = torch.add(torch.mul(1-cl_lambda, loss),torch.mul(cl_lambda, contrastive_loss))
-                
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
                 optimizer.step()

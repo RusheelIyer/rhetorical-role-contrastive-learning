@@ -6,9 +6,10 @@ import copy
 from transformers import BertModel
 
 from allennlp.modules import ConditionalRandomField
+from losses import SupConLoss
 
 import torch
-
+import torch.nn.functional as F
 
 class CRFOutputLayer(torch.nn.Module):
     ''' CRF output layer consisting of a linear layer and a CRF. '''
@@ -252,6 +253,7 @@ class SupConBertHSLN(torch.nn.Module):
                 torch.nn.ReLU(inplace=True),
                 torch.nn.Linear(config["dim_in"], config["feat_dim"])
             )
+        self.SupCon = SupConLoss()
 
     def forward(self, batch, labels=None):
         output, features = self.model(
@@ -259,4 +261,10 @@ class SupConBertHSLN(torch.nn.Module):
                 labels=labels
             )
         features = F.normalize(self.head(features), dim=2)
-        return output, features
+
+        cl_lambda = 0.2
+        contrastive_loss = self.SupCon(batch, features)
+        classification_loss = output["loss"]
+        output["loss"] = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, contrastive_loss))
+
+        return output
