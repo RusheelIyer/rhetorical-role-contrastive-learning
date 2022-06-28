@@ -103,7 +103,6 @@ class SentenceClassificationTrainer:
                     activation[name] = output.detach()
                 return hook
             
-            model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
@@ -114,7 +113,6 @@ class SentenceClassificationTrainer:
                     batch=batch,
                     labels=batch["label_ids"]
                 )
-                #sentence_embeddings = activation['sentence_lstm']
 
                 loss = output["loss"].sum()
                 cl_lambda = 0.2

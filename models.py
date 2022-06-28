@@ -253,7 +253,10 @@ class SupConBertHSLN(torch.nn.Module):
                 torch.nn.Linear(config["dim_in"], config["feat_dim"])
             )
 
-    def forward(self, x):
-        output, features = self.model(x)
+    def forward(self, batch, labels=None):
+        output, features = self.model(
+                batch=batch,
+                labels=labels
+            )
         features = F.normalize(self.head(features), dim=2)
-        return features
+        return output, features
