@@ -6,7 +6,6 @@ import copy
 from transformers import BertModel
 
 from allennlp.modules import ConditionalRandomField
-from losses import SupConLoss
 
 import torch
 import torch.nn.functional as F
@@ -186,6 +185,12 @@ class BertHSLN(torch.nn.Module):
 
         self.init_sentence_enriching(config, tasks)
 
+        self.head = torch.nn.Sequential(
+                torch.nn.Linear(config["dim_in"], config["dim_in"]),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Linear(config["dim_in"], config["feat_dim"])
+            )
+
         self.reinit_output_layer(tasks, config)
 
 
@@ -236,35 +241,14 @@ class BertHSLN(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
+        print("Sentence embeddings: ", sentence_embeddings_encoded.shape)
+        features = F.normalize(self.head(sentence_embeddings_encoded), dim=2)
+        print("Features: ", features.shape)
+
         if self.generic_output_layer:
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
-        return output, sentence_embeddings_encoded
 
-class SupConBertHSLN(torch.nn.Module):
-    """BertHSLN + projection head"""
-    def __init__(self, config, tasks):
-        super(SupConBertHSLN, self).__init__()
-        self.model = BertHSLN(config, tasks)
-        self.head = torch.nn.Sequential(
-                torch.nn.Linear(config["dim_in"], config["dim_in"]),
-                torch.nn.ReLU(inplace=True),
-                torch.nn.Linear(config["dim_in"], config["feat_dim"])
-            )
-        self.SupCon = SupConLoss()
-
-    def forward(self, batch, labels=None):
-        output, features = self.model(
-                batch=batch,
-                labels=labels
-            )
-        features = F.normalize(self.head(features), dim=2)
-
-        cl_lambda = 0.2
-        contrastive_loss = self.SupCon(batch, features)
-        classification_loss = output["loss"]
-        output["loss"] = torch.add(torch.mul(1-cl_lambda, classification_loss),torch.mul(cl_lambda, contrastive_loss))
-
-        return output
+        return output, features
