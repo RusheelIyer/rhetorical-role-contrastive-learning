@@ -73,11 +73,11 @@ class SentenceClassificationTrainer:
         max_grad_norm = 1.0
 
         self.result_writer.log(f"Number of model parameters: {get_num_model_parameters(model)}")
-        self.result_writer.log(f"Number of model parameters bert: {get_num_model_parameters(model.bert)}")
-        self.result_writer.log(f"Number of model parameters word_lstm: {get_num_model_parameters(model.word_lstm)}")
-        self.result_writer.log(f"Number of model parameters attention_pooling: {get_num_model_parameters(model.attention_pooling)}")
-        self.result_writer.log(f"Number of model parameters sentence_lstm: {get_num_model_parameters(model.sentence_lstm)}")
-        self.result_writer.log(f"Number of model parameters crf: {get_num_model_parameters(model.crf)}")
+        self.result_writer.log(f"Number of model parameters bert: {get_num_model_parameters(model.model.bert)}")
+        self.result_writer.log(f"Number of model parameters word_lstm: {get_num_model_parameters(model.model.word_lstm)}")
+        self.result_writer.log(f"Number of model parameters attention_pooling: {get_num_model_parameters(model.model.attention_pooling)}")
+        self.result_writer.log(f"Number of model parameters sentence_lstm: {get_num_model_parameters(model.model.sentence_lstm)}")
+        self.result_writer.log(f"Number of model parameters crf: {get_num_model_parameters(model.model.crf)}")
         print_model_parameters(model)
 
         # for feature based training use Adam optimizer with lr decay after each epoch (see Jin et al. Paper)

@@ -242,15 +242,15 @@ class BertHSLN(torch.nn.Module):
 
         return output, sentence_embeddings_encoded
 
-class SupConBertHSLN(nn.Module):
+class SupConBertHSLN(torch.nn.Module):
     """BertHSLN + projection head"""
     def __init__(self, config, tasks):
         super(SupConBertHSLN, self).__init__()
         self.model = BertHSLN(config, tasks)
-        self.head = nn.Sequential(
-                nn.Linear(config["dim_in"], config["dim_in"]),
-                nn.ReLU(inplace=True),
-                nn.Linear(config["dim_in"], config["feat_dim"])
+        self.head = torch.nn.Sequential(
+                torch.nn.Linear(config["dim_in"], config["dim_in"]),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Linear(config["dim_in"], config["feat_dim"])
             )
 
     def forward(self, x):
