@@ -30,7 +30,7 @@ class SupConLoss(nn.Module):
         documents, sentences, _ = batch["input_ids"].shape
         labels = batch["label_ids"].to(device)
 
-        features=self.head(features)[0]
+        features=F.normalize(self.head(features), dim=2)
 
         if labels is not None:
             mask = torch.eq(labels, labels.T).float()
@@ -45,23 +45,30 @@ class SupConLoss(nn.Module):
         else:
             mask = mask.float().to(device)
 
-        norms = features.norm(dim=1).view(-1,1)
-        norms = torch.matmul(norms, norms.T)
+        contrast_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
+        contrast_count = features.shape[1]
 
-        cos_similarity_matrix = torch.div(
-            torch.div(
-                torch.matmul(features, features.T),
-                norms
-                ),
-            0.07)
+        anchor_feature = contrast_feature
+        anchor_count = contrast_count
 
-        numerator = torch.exp(cos_similarity_matrix * mask)
+        # compute logits
+        anchor_dot_contrast = torch.div(
+                torch.matmul(anchor_feature, contrast_feature.T),
+                0.07
+            )
+        # for numerical stability
+        logits_max, _ = torch.max(anchor_dot_contrast, dim=1, keepdim=True)
+        logits = anchor_dot_contrast - logits_max.detach()
 
-        denom = (torch.exp(cos_similarity_matrix)*logits_mask).sum(1)
-        denom = denom.view(-1,1).repeat(1,sentences)
+        # compute log_prob
+        exp_logits = torch.exp(logits) * logits_mask
+        log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
 
-        log_prob = (torch.log(torch.div(numerator, denom))*mask)
-        num_positives = mask.sum(1).view(-1,1).repeat(1,sentences)
-        loss = torch.mul(torch.div(-1, num_positives),log_prob).nansum()
+        # compute mean of log-likelihood over positive
+        mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
+
+        # loss
+        loss = -1 * mean_log_prob_pos
+        loss = loss.view(anchor_count, documents).nansum()
 
         return loss
