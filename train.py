@@ -4,6 +4,7 @@ from torch.optim.lr_scheduler import StepLR
 from losses import SupConLoss
 
 import torch
+import torch.nn.functional as F
 import random
 import json
 import time
@@ -72,11 +73,11 @@ class SentenceClassificationTrainer:
         max_grad_norm = 1.0
 
         self.result_writer.log(f"Number of model parameters: {get_num_model_parameters(model)}")
-        self.result_writer.log(f"Number of model parameters bert: {get_num_model_parameters(model.model.bert)}")
-        self.result_writer.log(f"Number of model parameters word_lstm: {get_num_model_parameters(model.model.word_lstm)}")
-        self.result_writer.log(f"Number of model parameters attention_pooling: {get_num_model_parameters(model.model.attention_pooling)}")
-        self.result_writer.log(f"Number of model parameters sentence_lstm: {get_num_model_parameters(model.model.sentence_lstm)}")
-        self.result_writer.log(f"Number of model parameters crf: {get_num_model_parameters(model.model.crf)}")
+        self.result_writer.log(f"Number of model parameters bert: {get_num_model_parameters(model.bert)}")
+        self.result_writer.log(f"Number of model parameters word_lstm: {get_num_model_parameters(model.word_lstm)}")
+        self.result_writer.log(f"Number of model parameters attention_pooling: {get_num_model_parameters(model.attention_pooling)}")
+        self.result_writer.log(f"Number of model parameters sentence_lstm: {get_num_model_parameters(model.sentence_lstm)}")
+        self.result_writer.log(f"Number of model parameters crf: {get_num_model_parameters(model.crf)}")
         print_model_parameters(model)
 
         # for feature based training use Adam optimizer with lr decay after each epoch (see Jin et al. Paper)
@@ -102,18 +103,18 @@ class SentenceClassificationTrainer:
                     activation[name] = output.detach()
                 return hook
             
-            # model.sentence_lstm.register_forward_hook(get_activation('head'))
+            model.head.register_forward_hook(get_activation('head'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
                 # move tensor to gpu
                 tensor_dict_to_gpu(batch, self.device)
 
-                output, features = model(
+                output = model(
                     batch=batch,
                     labels=batch["label_ids"]
                 )
-                # sentence_embeddings = activation['head']
+                features = F.normalize(activation['head'], dim=2)
 
                 classification_loss = output["loss"].sum()
                 contrastive_loss = self.SupCon(batch, features)

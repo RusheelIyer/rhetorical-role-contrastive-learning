@@ -8,7 +8,6 @@ from transformers import BertModel
 from allennlp.modules import ConditionalRandomField
 
 import torch
-import torch.nn.functional as F
 
 class CRFOutputLayer(torch.nn.Module):
     ''' CRF output layer consisting of a linear layer and a CRF. '''
@@ -241,9 +240,7 @@ class BertHSLN(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
-        print("Sentence embeddings: ", sentence_embeddings_encoded.shape)
-        features = F.normalize(self.head(sentence_embeddings_encoded), dim=2)
-        print("Features: ", features.shape)
+        features = self.head(sentence_embeddings_encoded), dim=2
 
         if self.generic_output_layer:
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
@@ -251,4 +248,4 @@ class BertHSLN(torch.nn.Module):
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
 
-        return output, features
+        return output
