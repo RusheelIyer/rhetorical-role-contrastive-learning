@@ -240,7 +240,7 @@ class BertHSLN(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
-        features = self.head(sentence_embeddings_encoded), dim=2
+        features = self.head(sentence_embeddings_encoded)
 
         if self.generic_output_layer:
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
