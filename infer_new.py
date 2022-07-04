@@ -98,6 +98,8 @@ if __name__=="__main__":
         "max_seq_length": 128,
         "max_epochs": 40,
         "early_stopping": 5,
+        "dim_in": 2*758,
+        "feat_dim": 128,
     }
 
     MAX_DOCS = -1
