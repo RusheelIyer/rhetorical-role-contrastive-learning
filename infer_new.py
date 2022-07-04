@@ -10,7 +10,6 @@ from eval import eval_model
 from models import BertHSLN
 from task import pubmed_task
 from utils import get_device
-import argparse
 
 
 def create_task(create_func):
@@ -77,19 +76,11 @@ def write_in_hsln_format(input_json,hsln_format_txt_dirpath,tokenizer):
     return filename_sent_boundries
 
 if __name__=="__main__":
-    [_,input_dir, prediction_output_json_path, model_path] = sys.argv
+    [_,input_dir, prediction_output_json_path, model_path, use_contrastive] = sys.argv
 
     BERT_VOCAB = "bert-base-uncased"
     BERT_MODEL = "bert-base-uncased"
     tokenizer = BertTokenizer.from_pretrained(BERT_VOCAB, do_lower_case=True)
-
-    parser = argparse.ArgumentParser(description='Process custom config.')
-    parser.add_argument('--contrastive', action='store_true')
-    parser.add_argument('--no-contrastive', dest='contrastive', action='store_false')
-    parser.set_defaults(contrastive=True)
-
-    args = parser.parse_args()
-    use_contrastive = args.contrastive
 
     config = {
         "bert_model": BERT_MODEL,
