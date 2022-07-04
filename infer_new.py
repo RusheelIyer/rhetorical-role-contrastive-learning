@@ -10,6 +10,7 @@ from eval import eval_model
 from models import BertHSLN
 from task import pubmed_task
 from utils import get_device
+import argparse
 
 
 def create_task(create_func):
@@ -82,6 +83,14 @@ if __name__=="__main__":
     BERT_MODEL = "bert-base-uncased"
     tokenizer = BertTokenizer.from_pretrained(BERT_VOCAB, do_lower_case=True)
 
+    parser = argparse.ArgumentParser(description='Process custom config.')
+    parser.add_argument('--contrastive', action='store_true')
+    parser.add_argument('--no-contrastive', dest='contrastive', action='store_false')
+    parser.set_defaults(contrastive=True)
+
+    args = parser.parse_args()
+    use_contrastive = args.contrastive
+
     config = {
         "bert_model": BERT_MODEL,
         "bert_trainable": False,
@@ -101,6 +110,7 @@ if __name__=="__main__":
         "early_stopping": 5,
         "dim_in": 2*758,
         "feat_dim": 128,
+        "contrastive": use_contrastive,
     }
 
     MAX_DOCS = -1

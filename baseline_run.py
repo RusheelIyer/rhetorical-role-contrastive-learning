@@ -11,12 +11,20 @@ from task import pubmed_task
 from train import SentenceClassificationTrainer
 from models import BertHSLN
 import os
+import argparse
 
 # BERT_VOCAB = "bert-base-uncased"
 BERT_MODEL = "bert-base-uncased"
 # BERT_VOCAB = "bert_model/scibert_scivocab_uncased/vocab.txt"
 #BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
+parser = argparse.ArgumentParser(description='Process custom config.')
+parser.add_argument('--contrastive', action='store_true')
+parser.add_argument('--no-contrastive', dest='contrastive', action='store_false')
+parser.set_defaults(contrastive=True)
+
+args = parser.parse_args()
+use_contrastive = args.contrastive
 
 config = {
     "bert_model": BERT_MODEL,
@@ -37,6 +45,7 @@ config = {
     "early_stopping": 5,
     "dim_in": 2*758,
     "feat_dim": 128,
+    "contrastive": use_contrastive,
 }
 
 MAX_DOCS = -1

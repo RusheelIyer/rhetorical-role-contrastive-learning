@@ -182,14 +182,10 @@ class BertHSLN(torch.nn.Module):
                                                   dimension_context_vector_u=config["att_pooling_dim_ctx"],
                                                   number_context_vectors=config["att_pooling_num_ctx"])
 
+        self.use_contrastive = config["contrastive"]
+
         self.init_sentence_enriching(config, tasks)
-
-        self.head = torch.nn.Sequential(
-                torch.nn.Linear(config["dim_in"], config["dim_in"]),
-                torch.nn.ReLU(inplace=True),
-                torch.nn.Linear(config["dim_in"], config["feat_dim"])
-            )
-
+        self.init_contrastive()
         self.reinit_output_layer(tasks, config)
 
 
@@ -209,6 +205,14 @@ class BertHSLN(torch.nn.Module):
             self.crf = CRFOutputLayer(in_dim=input_dim, num_labels=len(tasks[0].labels))
         else:
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
+
+    def init_contrastive(self):
+        if(self.use_contrastive):
+            self.head = torch.nn.Sequential(
+                torch.nn.Linear(config["dim_in"], config["dim_in"]),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Linear(config["dim_in"], config["feat_dim"])
+            )
 
     def forward(self, batch, labels=None, output_all_tasks=False):
 
@@ -240,12 +244,12 @@ class BertHSLN(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
-        features = self.head(sentence_embeddings_encoded)
+        if (self.use_contrastive):
+            features = self.head(sentence_embeddings_encoded)
 
         if self.generic_output_layer:
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
-
 
         return output
