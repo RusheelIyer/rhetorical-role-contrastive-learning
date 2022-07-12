@@ -67,7 +67,7 @@ def eval_model(model, eval_batches, device, task):
             if batch["task"] != task.task_name:
                 continue
 
-            output = model(batch=batch)
+            output, _ = model(batch=batch)
 
             # get the batches sentence embeddings
             sentence_embeddings_batch = activation['sentence_lstm']
