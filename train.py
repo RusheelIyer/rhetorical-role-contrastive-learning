@@ -110,11 +110,11 @@ class SentenceClassificationTrainer:
                 # move tensor to gpu
                 tensor_dict_to_gpu(batch, self.device)
 
-                output = model(
+                output, features = model(
                     batch=batch,
                     labels=batch["label_ids"]
                 )
-                features = F.normalize(activation['head'], dim=2)
+                # features = F.normalize(activation['head'], dim=2)
 
                 classification_loss = output["loss"].sum()
                 contrastive_loss = self.SupCon(batch, features)
