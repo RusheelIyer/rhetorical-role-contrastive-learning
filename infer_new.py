@@ -101,7 +101,7 @@ if __name__=="__main__":
         "early_stopping": 5,
         "dim_in": 2*758,
         "feat_dim": 128,
-        "contrastive": use_contrastive,
+        "contrastive": (use_contrastive == 'True'),
     }
 
     MAX_DOCS = -1

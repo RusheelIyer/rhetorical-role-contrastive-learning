@@ -20,11 +20,6 @@ BERT_MODEL = "bert-base-uncased"
 
 [_,use_contrastive] = sys.argv
 
-print(use_contrastive)
-print(use_contrastive == 'True')
-print(use_contrastive == False)
-print(use_contrastive == 'False')
-
 config = {
     "bert_model": BERT_MODEL,
     "bert_trainable": False,
@@ -44,7 +39,7 @@ config = {
     "early_stopping": 5,
     "dim_in": 2*758,
     "feat_dim": 128,
-    "contrastive": use_contrastive,
+    "contrastive": (use_contrastive == 'True'),
 }
 
 MAX_DOCS = -1
