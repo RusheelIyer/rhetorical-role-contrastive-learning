@@ -117,10 +117,13 @@ class SentenceClassificationTrainer:
                 # features = F.normalize(activation['head'], dim=2)
 
                 classification_loss = output["loss"].sum()
-                contrastive_loss = self.SupCon(batch, features)
-
-                cl_lambda = 0.2
-                loss = ((1-cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
+                if (self.config['use_contrastive']):
+                    contrastive_loss = self.SupCon(batch, features)
+                    
+                    cl_lambda = 0.2
+                    loss = ((1-cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
+                else:
+                    loss = classification_loss
 
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
