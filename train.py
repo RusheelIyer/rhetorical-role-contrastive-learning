@@ -117,7 +117,7 @@ class SentenceClassificationTrainer:
                 # features = F.normalize(activation['head'], dim=2)
 
                 classification_loss = output["loss"].sum()
-                if (self.config['use_contrastive']):
+                if (self.config['contrastive']):
                     contrastive_loss = self.SupCon(batch, features)
                     
                     cl_lambda = 0.2
