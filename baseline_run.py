@@ -20,6 +20,11 @@ BERT_MODEL = "bert-base-uncased"
 
 [_,use_contrastive] = sys.argv
 
+print(use_contrastive)
+print(use_contrastive == 'True')
+print(use_contrastive == False)
+print(use_contrastive == 'False')
+
 config = {
     "bert_model": BERT_MODEL,
     "bert_trainable": False,
