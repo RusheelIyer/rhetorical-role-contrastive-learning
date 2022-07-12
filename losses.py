@@ -54,10 +54,15 @@ class SupConLoss(nn.Module):
         log_prob = logits - torch.log(exp_logits.sum(1, keepdim=True))
 
         # compute mean of log-likelihood over positive
-        mean_log_prob_pos = (mask * log_prob).sum(1) / mask.sum(1)
+        mean_log_prob_pos = (mask * log_prob).sum(1)
+        
+        # avoid div by 0 NaN for labels without positive samples
+        denom = mask.sum(1)
+        denom = denom ** (denom!=0)
+        mean_log_prob_pos /= denom
 
         # loss
         loss = -1 * mean_log_prob_pos
-        loss = loss.view(anchor_count, documents).nansum()
+        loss = loss.view(anchor_count, documents).sum()
 
         return loss

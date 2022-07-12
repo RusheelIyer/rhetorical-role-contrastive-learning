@@ -103,7 +103,7 @@ class SentenceClassificationTrainer:
                     activation[name] = output.detach()
                 return hook
             
-            model.head.register_forward_hook(get_activation('head'))
+            # model.head.register_forward_hook(get_activation('head'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
