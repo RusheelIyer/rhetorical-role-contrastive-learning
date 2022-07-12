@@ -186,7 +186,7 @@ class BertHSLN(torch.nn.Module):
         self.use_contrastive = config["contrastive"]
 
         self.init_sentence_enriching(config, tasks)
-        self.init_contrastive(config["dim_in"], config["dim_in"])
+        self.init_contrastive(config["dim_in"], config["feat_dim"])
         self.reinit_output_layer(tasks, config)
 
 

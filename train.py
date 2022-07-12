@@ -96,14 +96,7 @@ class SentenceClassificationTrainer:
             self.result_writer.log(f'training model for fold {fold_num} in epoch {epoch} ...')
 
             random.shuffle(train_batches)
-
-            activation = {}
-            def get_activation(name):
-                def hook(model, input, output):
-                    activation[name] = output.detach()
-                return hook
             
-            # model.head.register_forward_hook(get_activation('head'))
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
@@ -120,7 +113,6 @@ class SentenceClassificationTrainer:
                         batch=batch,
                         labels=batch["label_ids"]
                     )
-                # features = F.normalize(activation['head'], dim=2)
 
                 classification_loss = output["loss"].sum()
                 if (self.config['contrastive']):

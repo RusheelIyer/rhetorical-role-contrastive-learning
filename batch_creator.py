@@ -72,7 +72,6 @@ class BatchCreator:
         sentences = list(document.data.sentences)
         labels = list(document.data.labels)
 
-
         # pad number of sentences
         for _ in range(len(document.data.labels), sentence_padding_len):
             sentences.append("")
@@ -81,6 +80,7 @@ class BatchCreator:
         token_ids = []
         attention_masks = []
         label_ids = []
+
         for sentence, label in zip(sentences, labels):
             if self.tokenizer is None:
                 # sentence already tokenized
@@ -100,14 +100,29 @@ class BatchCreator:
             attention_masks.append(attention_mask)
             label_ids.append(label_id)
 
+        label_distances = np.zeros((len(label_ids), len(self.labels)))
+
+        for i in range(len(label_ids)):
+            for j in range(len(self.labels)):
+                label_distances[i][j] = get_min_dist(i, j, label_ids)
+
         return {
             "sentence_mask": pad_sequence_to_length([1] * document.length, desired_length=sentence_padding_len),
             "input_ids": token_ids,
             "attention_mask": attention_masks,
             "label_ids": label_ids,
-            "doc_name": document.data.doc_name
+            "doc_name": document.data.doc_name,
+            "label_distances": label_distances.tolist()
         }
 
+def get_min_dist(anchor_idx, search_label_id, sentence_labels):
+    
+    distances = [abs(anchor_idx-i) for i, x in enumerate(sentence_labels) if x == search_label_id]
+
+    if distances == []:
+        return 0
+    else:
+        return min(distances)
 
 def merge_records (merged, r):
     if merged is None:
