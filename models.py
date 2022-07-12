@@ -186,7 +186,7 @@ class BertHSLN(torch.nn.Module):
         self.use_contrastive = config["contrastive"]
 
         self.init_sentence_enriching(config, tasks)
-        self.init_contrastive()
+        self.init_contrastive(config["dim_in"], config["dim_in"])
         self.reinit_output_layer(tasks, config)
 
 
@@ -207,12 +207,12 @@ class BertHSLN(torch.nn.Module):
         else:
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
 
-    def init_contrastive(self):
+    def init_contrastive(self, dim_in, feat_dim):
         if(self.use_contrastive):
             self.head = torch.nn.Sequential(
-                torch.nn.Linear(config["dim_in"], config["dim_in"]),
+                torch.nn.Linear(dim_in, dim_in),
                 torch.nn.ReLU(inplace=True),
-                torch.nn.Linear(config["dim_in"], config["feat_dim"])
+                torch.nn.Linear(dim_in, feat_dim)
             )
 
     def forward(self, batch, labels=None, output_all_tasks=False):
