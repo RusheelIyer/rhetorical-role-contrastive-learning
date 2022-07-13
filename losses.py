@@ -11,7 +11,7 @@ class SupConLoss(nn.Module):
     Compute loss for model.
     Args:
         batch: ground truth
-        features: hidden vector of shape [bsz, n_views, ...].
+        features: hidden vector of shape [sentences, 128 (feat_dim)].
     Returns:
         A loss scalar.
     """

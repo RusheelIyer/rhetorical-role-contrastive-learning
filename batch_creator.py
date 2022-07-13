@@ -106,6 +106,9 @@ class BatchCreator:
             for j in range(len(self.labels)):
                 label_distances[i][j] = get_min_dist(i, j, label_ids)
 
+        norm = np.tile(np.linalg.norm(label_distances, axis=1, keepdims=True), len(label_ids))
+        label_distances /= norm
+
         return {
             "sentence_mask": pad_sequence_to_length([1] * document.length, desired_length=sentence_padding_len),
             "input_ids": token_ids,
