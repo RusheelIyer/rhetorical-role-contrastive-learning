@@ -68,15 +68,18 @@ def eval_model(model, eval_batches, device, task, contrastive):
                 continue
 
             if (contrastive):
-                output, sentence_embeddings_batch, _ = model(batch=batch)
+                output, sentence_embeddings_batch, features = model(batch=batch)
             else:
                 output, sentence_embeddings_batch = model(batch=batch)
 
             # get the batches sentence embeddings
             # sentence_embeddings_batch = activation['sentence_lstm']
 
+            predicted_labels, knn_percent = kNN(memory_bank, memory_bank_labels, features, batch["label_ids"]):
+            print(knn_percent)
             true_labels_batch, predicted_labels_batch = \
-                clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
+                #clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
+                clear_and_map_padded_values(batch["label_ids"].view(-1), predicted_labels.view(-1), task.labels)
 
             docwise_true_labels.append(true_labels_batch)
             docwise_predicted_labels.append(predicted_labels_batch)
@@ -118,3 +121,13 @@ def clear_and_map_padded_values(true_labels, predicted_labels, labels):
             cleared_predicted.append(labels[predicted_label])
     return cleared_true, cleared_predicted
 
+def kNN(memory_bank, memory_bank_labels, features, feature_labels):
+
+    dist = torch.norm(memory_bank - features, dim=1, p=None)
+    knn_vals, knn_indices = dist.topk(10, largest=False)
+
+    pred_labels = memory_bank_labels[knn_indices]
+
+    total_labels = feature_labels.shape[1]
+
+    return pred_labels, (torch.eq(pred_labels, feature_labels).sum()/total_labels)*100

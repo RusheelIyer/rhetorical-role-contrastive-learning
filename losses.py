@@ -187,17 +187,4 @@ class SupConLossMemory(nn.Module):
         loss = -1 * mean_log_prob_pos
         loss = loss.view(anchor_count, documents).sum()
 
-        knn_loss = kNN(memory_bank, memory_bank_labels, features, labels)
-
-        return loss + knn_loss
-
-    def kNN(memory_bank, memory_bank_labels, features, feature_labels):
-
-        dist = torch.norm(memory_bank - features, dim=1, p=None)
-        knn_vals, knn_indices = dist.topk(10, largest=False)
-
-        pred_labels = memory_bank_labels[knn_indices]
-
-        total_labels = feature_labels.shape[1]
-
-        return (torch.eq(pred_labels, feature_labels).sum()/total_labels)*100
+        return loss
