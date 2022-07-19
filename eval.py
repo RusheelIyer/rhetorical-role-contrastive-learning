@@ -45,7 +45,7 @@ def get_activation(name):
         activation[name] = output.detach()
     return hook
 
-def eval_model(model, eval_batches, device, task, contrastive):
+def eval_model(model, eval_batches, device, task, contrastive, memory_bank, memory_bank_labels):
     
     # register a hook to receive activations after sentence_lstm layer
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
@@ -75,11 +75,11 @@ def eval_model(model, eval_batches, device, task, contrastive):
             # get the batches sentence embeddings
             # sentence_embeddings_batch = activation['sentence_lstm']
 
-            predicted_labels, knn_percent = kNN(memory_bank, memory_bank_labels, features, batch["label_ids"]):
+            predicted_labels, knn_percent = kNN(memory_bank, memory_bank_labels, features, batch["label_ids"])
             print(knn_percent)
             true_labels_batch, predicted_labels_batch = \
+            clear_and_map_padded_values(batch["label_ids"].view(-1), predicted_labels.view(-1), task.labels)
                 #clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
-                clear_and_map_padded_values(batch["label_ids"].view(-1), predicted_labels.view(-1), task.labels)
 
             docwise_true_labels.append(true_labels_batch)
             docwise_predicted_labels.append(predicted_labels_batch)
