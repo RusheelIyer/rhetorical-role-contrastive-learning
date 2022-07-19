@@ -118,8 +118,12 @@ class SentenceClassificationTrainer:
                         labels=batch["label_ids"]
                     )
 
-                    memory_bank.append(features)
-                    memory_bank_labels.append(batch["label_ids"])
+                    if (memory_bank == None):
+                        memory_bank = features
+                        memory_bank_labels. = batch["label_ids"]
+                    else:
+                        torch.concat((memory_bank, features), dim=1)
+                        torch.concat((memory_bank_labels, batch["label_ids"]), dim=1)
                 else:
                     output, sentence_embeddings_encoded = model(
                         batch=batch,
@@ -128,7 +132,8 @@ class SentenceClassificationTrainer:
 
                 classification_loss = output["loss"].sum()
                 if (self.config['contrastive']):
-                    contrastive_loss = self.SupCon(batch, features)
+                    #contrastive_loss = self.SupCon(batch, features)
+                    contrastive_loss = self.SupCon(memory_bank, memory_bank_labels, features)
                     
                     cl_lambda = 0.2
                     loss = ((1 - cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)

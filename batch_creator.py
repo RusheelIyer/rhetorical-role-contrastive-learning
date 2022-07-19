@@ -100,14 +100,14 @@ class BatchCreator:
             attention_masks.append(attention_mask)
             label_ids.append(label_id)
 
-        label_distances = np.zeros((len(label_ids), len(self.labels)))
+        """label_distances = np.zeros((len(label_ids), len(self.labels)))
 
         for i in range(len(label_ids)):
             for j in range(len(self.labels)):
                 label_distances[i][j] = get_min_dist(i, j, label_ids)
 
         norm = np.tile(np.linalg.norm(label_distances, axis=1, keepdims=True), len(label_ids))
-        label_distances /= norm
+        label_distances /= norm"""
 
         return {
             "sentence_mask": pad_sequence_to_length([1] * document.length, desired_length=sentence_padding_len),
@@ -115,7 +115,7 @@ class BatchCreator:
             "attention_mask": attention_masks,
             "label_ids": label_ids,
             "doc_name": document.data.doc_name,
-            "label_distances": label_distances.tolist()
+            #"label_distances": label_distances.tolist()
         }
 
 # Get the distance of the anchor to the closest of each labels in the doc
