@@ -95,8 +95,8 @@ class SentenceClassificationTrainer:
             total_train_sentences += batch["input_ids"].shape[1]
 
         #memory_bank = torch.zeros(total_train_sentences, 2*config["word_lstm_hs"])
-        memory_bank = []
-        memory_bank_labels = []
+        memory_bank = None
+        memory_bank_labels = None
 
         optimizer.zero_grad()
         while epoch < max_train_epochs and early_stopping_counter < early_stopping:
@@ -120,10 +120,10 @@ class SentenceClassificationTrainer:
 
                     if (memory_bank == None):
                         memory_bank = features
-                        memory_bank_labels. = batch["label_ids"]
+                        memory_bank_labels = batch["label_ids"]
                     else:
-                        torch.concat((memory_bank, features), dim=1)
-                        torch.concat((memory_bank_labels, batch["label_ids"]), dim=1)
+                        memory_bank = torch.cat((memory_bank, features), dim=1).detach()
+                        memory_bank_labels = torch.cat((memory_bank_labels, batch["label_ids"]), dim=1).detach()
                 else:
                     output, sentence_embeddings_encoded = model(
                         batch=batch,
