@@ -252,6 +252,6 @@ class BertHSLN(torch.nn.Module):
 
         if (self.use_contrastive):
             features = F.normalize(self.head(sentence_embeddings_encoded), dim=2)
-            return output, features
+            return output, sentence_embeddings_encoded, features
 
-        return output
+        return output, sentence_embeddings_encoded

@@ -118,6 +118,7 @@ class BatchCreator:
             "label_distances": label_distances.tolist()
         }
 
+# Get the distance of the anchor to the closest of each labels in the doc
 def get_min_dist(anchor_idx, search_label_id, sentence_labels):
     
     distances = [abs(anchor_idx-i) for i, x in enumerate(sentence_labels) if x == search_label_id]

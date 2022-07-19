@@ -45,7 +45,7 @@ def get_activation(name):
         activation[name] = output.detach()
     return hook
 
-def eval_model(model, eval_batches, device, task):
+def eval_model(model, eval_batches, device, task, contrastive):
     
     # register a hook to receive activations after sentence_lstm layer
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
@@ -67,10 +67,13 @@ def eval_model(model, eval_batches, device, task):
             if batch["task"] != task.task_name:
                 continue
 
-            output, _ = model(batch=batch)
+            if (contrastive):
+                output, sentence_embeddings_batch, _ = model(batch=batch)
+            else:
+                output, sentence_embeddings_batch = model(batch=batch)
 
             # get the batches sentence embeddings
-            sentence_embeddings_batch = activation['sentence_lstm']
+            # sentence_embeddings_batch = activation['sentence_lstm']
 
             true_labels_batch, predicted_labels_batch = \
                 clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)

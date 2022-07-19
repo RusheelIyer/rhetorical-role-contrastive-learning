@@ -1,7 +1,7 @@
 from prettytable import PrettyTable
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from losses import SupConLoss
+from losses import SupConLoss, SupConLossMemory
 
 import torch
 import torch.nn.functional as F
@@ -30,7 +30,7 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
-        self.SupCon = SupConLoss()
+        self.SupCon = SupConLossMemory()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -89,6 +89,15 @@ class SentenceClassificationTrainer:
         epoch = 0
         early_stopping = self.config["early_stopping"]
         best_model = None
+
+        total_train_sentences = 0
+        for batch in train_batches:
+            total_train_sentences += batch["input_ids"].shape[1]
+
+        #memory_bank = torch.zeros(total_train_sentences, 2*config["word_lstm_hs"])
+        memory_bank = []
+        memory_bank_labels = []
+
         optimizer.zero_grad()
         while epoch < max_train_epochs and early_stopping_counter < early_stopping:
             epoch_start = time.time()
@@ -104,22 +113,26 @@ class SentenceClassificationTrainer:
                 tensor_dict_to_gpu(batch, self.device)
 
                 if (self.config['contrastive']):
-                    output, features = model(
+                    output, sentence_embeddings_encoded, features = model(
                         batch=batch,
                         labels=batch["label_ids"]
                     )
+
+                    memory_bank.append(features)
+                    memory_bank_labels.append(batch["label_ids"])
                 else:
-                    output = model(
+                    output, sentence_embeddings_encoded = model(
                         batch=batch,
                         labels=batch["label_ids"]
                     )
 
                 classification_loss = output["loss"].sum()
                 if (self.config['contrastive']):
-                    contrastive_loss = self.SupCon(batch, features).sum()
+                    contrastive_loss = self.SupCon(batch, features)
                     
                     cl_lambda = 0.2
                     loss = ((1 - cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
+
                 else:
                     loss = classification_loss
 
@@ -171,120 +184,3 @@ class SentenceClassificationTrainer:
 
             epoch += 1
         return best_model
-
-
-
-class SentenceClassificationMultitaskTrainer:
-    '''Trainer for multitask model.
-       Has only small differences to  SentenceClassificationTrainer
-        (i.e. no early stopping, two devices to separate models on several gpus)
-    '''
-    def __init__(self, device, config, tasks, result_writer, device2=None):
-        self.device = device
-        self.device2 = device2
-        self.config = config
-        self.result_writer = result_writer
-        self.cur_result = dict()
-        self.cur_result["tasks"] = [task.task_name for task in tasks]
-        self.cur_result["config"] = config
-
-        self.tasks = tasks
-
-    def write_results(self, task, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
-        self.cur_result["task"] = task.task_name
-        self.cur_result["epoch"] = epoch
-        self.cur_result["train_duration"] = train_duration
-        self.cur_result["dev_metrics"] = dev_metrics
-        self.cur_result["dev_confusion"] = dev_confusion
-        self.cur_result["test_metrics"] = test_metrics
-        self.cur_result["test_confusion"] = test_confusion
-
-        self.result_writer.write(json.dumps(self.cur_result))
-
-
-    def run_training(self, train_batches, dev_batches, test_batches, restart, fold_num, save_models=False, save_best_model_path=None):
-
-        self.result_writer.log(f'device: {self.device}')
-
-        train_batch_count = len(train_batches)
-        self.result_writer.log(f"train batches: {train_batch_count}")
-        self.result_writer.log(f"dev batches: {len(dev_batches)}")
-        self.result_writer.log(f"test batches: {len(test_batches)}")
-
-        # instantiate model per reflection
-        model = getattr(models, self.config["model"])(self.config, self.tasks)
-        self.result_writer.log("Model: " + model.__class__.__name__)
-        self.cur_result["model"] = model.__class__.__name__
-
-        if self.device2 is not None:
-            model.to_device(self.device, self.device2)
-        else:
-            model.to(self.device)
-
-        max_train_epochs = self.config["max_epochs"]
-        lr = self.config["lr"]
-        max_grad_norm = 1.0
-
-        # for feature based training use Adam optimizer with lr decay after each epoch (see Jin et al. Paper)
-        optimizer = Adam(model.parameters(), lr=lr)
-        epoch_scheduler = StepLR(optimizer, step_size=1, gamma=self.config["lr_epoch_decay"])
-
-        optimizer.zero_grad()
-
-        best_dev_result = 0.0
-        epoch = 0
-        while epoch < max_train_epochs:
-            epoch_start = time.time()
-
-            self.result_writer.log(f'training model in epoch {epoch} ...')
-
-            random.shuffle(train_batches)
-            # train model
-            model.train()
-            for batch_num, batch in enumerate(train_batches):
-                # move tensor to gpu
-                tensor_dict_to_gpu(batch, self.device)
-
-                output = model(batch=batch, labels=batch["label_ids"])
-                loss = output["loss"]
-                loss = loss.sum()
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
-                optimizer.step()
-                optimizer.zero_grad()
-
-                # move batch to cpu again to save gpu memory
-                tensor_dict_to_cpu(batch)
-
-                if batch_num % 100 == 0:
-                    self.result_writer.log(f"Loss in epoch {epoch}, batch {batch_num}: {loss.item()}")
-
-            train_duration = time.time() - epoch_start
-
-            epoch_scheduler.step()
-
-            # evaluate model
-            weighted_f1_dev_scores = []
-            for task in self.tasks:
-                self.result_writer.log(f'evaluating model for task {task.task_name}...')
-                dev_metrics, dev_confusion, _ = eval_model(model, dev_batches, self.device, task)
-                test_metrics, test_confusion, _ = eval_model(model, test_batches, self.device, task)
-                self.write_results(task, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion)
-                self.result_writer.log(
-                    f'epoch: {epoch}, train duration: {train_duration}, dev weighted f1: {dev_metrics["weighted-f1"]}, dev {task.dev_metric}: {dev_metrics[task.dev_metric]}, test weighted-F1: {test_metrics["weighted-f1"]}, test micro-F1: {test_metrics["micro-f1"]}. test macro-F1: {test_metrics["macro-f1"]}, test accuracy: {test_metrics["acc"]}')
-                weighted_f1_dev_scores.append(test_metrics["weighted-f1"])
-            weighted_f1_avg = np.mean(weighted_f1_dev_scores)
-
-            if save_models:
-                model_copy = copy.deepcopy(model)
-                model_path = os.path.join(save_best_model_path, f'{restart}_{fold_num}_{epoch}_model.pt')
-                self.result_writer.log(f"saving model to {model_path}")
-                torch.save(model_copy.state_dict(), model_path)
-
-            if weighted_f1_avg > best_dev_result:
-                best_dev_result = weighted_f1_avg
-                self.result_writer.log(f'*** epoch: {epoch}, mean weighted-F1 dev score: {weighted_f1_avg}')
-            else:
-                self.result_writer.log(f'epoch: {epoch}, mean weighted-F1 dev score: {weighted_f1_avg}')
-
-            epoch += 1
