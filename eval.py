@@ -124,6 +124,7 @@ def clear_and_map_padded_values(true_labels, predicted_labels, labels):
 def kNN(memory_bank, memory_bank_labels, features, feature_labels):
 
     pred_labels = torch.zeros_like(feature_labels)
+    pred_labels_list = []
 
     for i in range(features.shape[0]):
         for j in range(features.shape[1]):
@@ -131,11 +132,12 @@ def kNN(memory_bank, memory_bank_labels, features, feature_labels):
             dist = torch.norm(memory_bank - sentence, dim=2, p=None)
 
             _, knn_indices = dist.topk(10, largest=False)
-            pred_labels[i][j] = get_majority_label(memory_bank_labels[knn_indices])
+            pred_labels[i][j] = get_majority_label(memory_bank_labels[i][knn_indices])
+            pred_labels_list.append(pred_labels[i][j])
 
     total_labels = feature_labels.shape[1]
 
-    return pred_labels, (torch.eq(pred_labels, feature_labels).sum()/total_labels)*100
+    return pred_labels_list, (torch.eq(pred_labels, feature_labels).sum()/total_labels)*100
 
 def get_majority_label(labels):
-    return max(set(labels), key = label.count)
+    return torch.mode(labels).values.item()

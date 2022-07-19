@@ -90,10 +90,6 @@ class SentenceClassificationTrainer:
         early_stopping = self.config["early_stopping"]
         best_model = None
 
-        total_train_sentences = 0
-        for batch in train_batches:
-            total_train_sentences += batch["input_ids"].shape[1]
-
         #memory_bank = torch.zeros(total_train_sentences, 2*config["word_lstm_hs"])
         memory_bank = None
         memory_bank_labels = None
