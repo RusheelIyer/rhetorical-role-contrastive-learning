@@ -75,7 +75,7 @@ def eval_model(model, eval_batches, device, task, contrastive, memory_bank = Non
             # get the batches sentence embeddings
             # sentence_embeddings_batch = activation['sentence_lstm']
 
-            if(memory_bank is not None and memory_bank_labels is not None):
+            if(memory_bank is None or memory_bank_labels is None):
                 true_labels_batch, predicted_labels_batch = \
                     clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)
             else:
