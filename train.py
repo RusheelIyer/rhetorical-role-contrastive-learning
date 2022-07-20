@@ -91,8 +91,6 @@ class SentenceClassificationTrainer:
         best_model = None
 
         #memory_bank = torch.zeros(total_train_sentences, 2*config["word_lstm_hs"])
-        memory_bank = None
-        memory_bank_labels = None
 
         optimizer.zero_grad()
         while epoch < max_train_epochs and early_stopping_counter < early_stopping:
@@ -102,6 +100,8 @@ class SentenceClassificationTrainer:
 
             random.shuffle(train_batches)
             
+            memory_bank = None
+            memory_bank_labels = None
             # train model
             model.train()
             for batch_num, batch in enumerate(train_batches):
@@ -128,7 +128,7 @@ class SentenceClassificationTrainer:
 
                 classification_loss = output["loss"].sum()
                 if (self.config['contrastive']):
-                    contrastive_loss = self.SupCon(batch, features)
+                    contrastive_loss = self.SupCon(batch, features, memory_bank, memory_bank_labels)
                     #contrastive_loss = self.SupCon(memory_bank, memory_bank_labels, features)
                     
                     cl_beta = 1
