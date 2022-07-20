@@ -76,9 +76,6 @@ def eval_model(model, eval_batches, device, task, contrastive, memory_bank, memo
             # sentence_embeddings_batch = activation['sentence_lstm']
 
             knn_predicted_labels, _ = kNN(memory_bank, memory_bank_labels, features, batch["label_ids"])
-            print(type(batch["label_ids"]))
-            print(batch["label_ids"].shape)
-            print(predicted_labels.shape)
             true_labels_batch, predicted_labels_batch = \
             clear_and_map_padded_values(batch["label_ids"].view(-1), knn_predicted_labels.view(-1), task.labels)
                 #clear_and_map_padded_values(batch["label_ids"].view(-1), output["predicted_label"].view(-1), task.labels)

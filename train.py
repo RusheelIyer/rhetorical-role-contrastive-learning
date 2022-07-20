@@ -30,7 +30,7 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
-        self.SupCon = SupConLoss()
+        self.SupCon = SupConLossMemory()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -131,8 +131,8 @@ class SentenceClassificationTrainer:
                     contrastive_loss = self.SupCon(batch, features)
                     #contrastive_loss = self.SupCon(memory_bank, memory_bank_labels, features)
                     
-                    cl_lambda = 0.2
-                    loss = ((1 - cl_lambda)*classification_loss) + (cl_lambda*contrastive_loss)
+                    cl_beta = 1
+                    loss = (classification_loss) + (cl_beta*contrastive_loss)
 
                 else:
                     loss = classification_loss
