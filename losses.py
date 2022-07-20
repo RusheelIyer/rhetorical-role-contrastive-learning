@@ -81,7 +81,7 @@ class SupConLossMemory(nn.Module):
         feature_labels = batch["label_ids"]
         _, knn_loss = self.kNN(memory_bank, memory_bank_labels, features, feature_labels)
 
-        return loss + knn_loss
+        return contr_loss + knn_loss
 
     def kNN(self, memory_bank, memory_bank_labels, features, feature_labels):
 
