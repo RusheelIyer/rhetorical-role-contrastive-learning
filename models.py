@@ -261,7 +261,7 @@ class BertHSLNProto(torch.nn.Module):
     Model for Baseline, Sequential Transfer Learning and Multitask-Learning with all layers shared (except output layer).
     '''
     def __init__(self, config, tasks):
-        super(BertHSLN, self).__init__()
+        super(BertHSLNProto, self).__init__()
 
         self.bert = BertTokenEmbedder(config)
 
