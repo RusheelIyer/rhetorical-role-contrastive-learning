@@ -287,7 +287,7 @@ class BertHSLNProto(torch.nn.Module):
                 torch.nn.Linear(config["dim_in"], config["feat_dim"])
             )
 
-        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), 2 * self.lstm_hidden_size)
+        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), config["feat_dim"])
 
         self.init_sentence_enriching(config, tasks)
         self.reinit_output_layer(tasks, config)
