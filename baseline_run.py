@@ -10,7 +10,7 @@ from eval_run import eval_and_save_metrics
 from utils import get_device, ResultWriter, log
 from task import pubmed_task
 from train import SentenceClassificationTrainer
-from models import BertHSLN
+from models import BertHSLN, BertHSLNProto
 import os
 
 # BERT_VOCAB = "bert-base-uncased"
@@ -20,10 +20,12 @@ BERT_MODEL = "bert-base-uncased"
 
 [_,task_type] = sys.argv
 
+model_name = BertHSLNProto.__name__ if task_type == 'proto_sim' else BertHSLN.__name__
+
 config = {
     "bert_model": BERT_MODEL,
     "bert_trainable": False,
-    "model": BertHSLN.__name__,
+    "model": model_name,
     "cacheable_tasks": [],
 
     "dropout": 0.5,
