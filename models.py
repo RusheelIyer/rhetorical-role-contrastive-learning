@@ -281,7 +281,7 @@ class BertHSLNProto(torch.nn.Module):
                                                   dimension_context_vector_u=config["att_pooling_dim_ctx"],
                                                   number_context_vectors=config["att_pooling_num_ctx"])
 
-        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), feat_dim)
+        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), 2 * self.lstm_hidden_size)
 
         self.init_sentence_enriching(config, tasks)
         self.reinit_output_layer(tasks, config)
