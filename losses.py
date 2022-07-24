@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class SupConLoss(nn.Module):
     
@@ -187,6 +188,8 @@ class ProtoSimLoss(nn.Module):
         documents, sentences, _ = batch["input_ids"].shape
         labels = batch["label_ids"].to(device)
 
+        features = F.normalize(features, dim=2)
+
         cp_loss = self.get_contrastive_loss(device, features, labels, sentences)
         cluster_loss = self.get_cluster_loss(device, features, labels, sentences, prototypes)
 
@@ -242,6 +245,6 @@ class ProtoSimLoss(nn.Module):
         neg_dists_z_ = torch.log(1 - (dists_s2z*(1-mask)/counts))
         pos_dists_z_ = pos_dists/mask.sum(1)*(1-mask)
 
-        ls2z_ = (pos_dists_z_ + neg_dists).sum()
+        ls2z_ = (pos_dists_z_ + neg_dists_z_).sum()
 
         return (-1/sentences**2)*(ls2z + ls2z_)
