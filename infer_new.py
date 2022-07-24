@@ -7,7 +7,7 @@ from transformers import BertTokenizer
 
 import models
 from eval import eval_model
-from models import BertHSLN
+from models import BertHSLN, BertHSLNProto
 from task import pubmed_task
 from utils import get_device
 
@@ -76,16 +76,17 @@ def write_in_hsln_format(input_json,hsln_format_txt_dirpath,tokenizer):
     return filename_sent_boundries
 
 if __name__=="__main__":
-    [_,input_dir, prediction_output_json_path, model_path, use_contrastive] = sys.argv
+    [_,input_dir, prediction_output_json_path, model_path, task_type] = sys.argv
 
     BERT_VOCAB = "bert-base-uncased"
     BERT_MODEL = "bert-base-uncased"
+    model_name = BertHSLNProto.__name__ if task_type == 'proto_sim' else BertHSLN.__name__
     tokenizer = BertTokenizer.from_pretrained(BERT_VOCAB, do_lower_case=True)
 
     config = {
         "bert_model": BERT_MODEL,
         "bert_trainable": False,
-        "model": BertHSLN.__name__,
+        "model": model_name,
         "cacheable_tasks": [],
 
         "dropout": 0.5,
@@ -101,7 +102,7 @@ if __name__=="__main__":
         "early_stopping": 5,
         "dim_in": 2*758,
         "feat_dim": 128,
-        "contrastive": (use_contrastive == 'True'),
+        "task_type": task_type,
     }
 
     MAX_DOCS = -1
