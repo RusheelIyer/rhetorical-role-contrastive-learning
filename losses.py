@@ -228,9 +228,10 @@ class ProtoSimLoss(nn.Module):
         mask = torch.eq(labels, labels.T).float().to(device)
 
         anchor_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
+        prototypes_reshape = torch.cat(torch.unbind(prototypes, dim=1), dim=0)
         
-        dists_z2s = torch.div(1, 1 + torch.exp(torch.matmul(prototypes, anchor_feature.T)))
-        dists_s2z = torch.div(1, 1 + torch.exp(torch.matmul(anchor_feature, prototypes.T)))
+        dists_z2s = torch.div(1, 1 + torch.exp(torch.matmul(prototypes_reshape, anchor_feature.T)))
+        dists_s2z = torch.div(1, 1 + torch.exp(torch.matmul(anchor_feature, prototypes_reshape.T)))
 
         pos_dists = ((torch.log(dists_s2z)* mask).sum(1)/mask.sum(1)).view(-1,1)
         neg_dists = torch.log(1-dists_z2s)*(1-mask)
