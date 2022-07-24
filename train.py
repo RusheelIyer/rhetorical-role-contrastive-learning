@@ -139,7 +139,7 @@ class SentenceClassificationTrainer:
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
                 elif self.config['task_type'] == 'proto_sim':
-                    protosim_loss = self.ConLossFunc(batch, features, prototypes)
+                    protosim_loss = self.ConLossFunc(batch, sentence_embeddings_encoded, prototypes)
 
                     lambda_3 = 0.5
                     loss = (lambda_3*classification_loss) + protosim_loss
