@@ -236,7 +236,7 @@ class ProtoSimLoss(nn.Module):
         pos_dists = ((torch.log(dists_s2z)* mask).sum(1)/mask.sum(1)).view(-1,1)
         neg_dists = torch.log(1-dists_z2s)*(1-mask)
 
-        ls2z = ((pos_dists + neg_dists)*(1-old_mask)).sum()
+        ls2z = ((pos_dists + neg_dists)*(1-mask)).sum()
 
         counts = mask.sum(1).tile(sentences).view(sentences,sentences)
         neg_dists_z_ = torch.log(1 - (dists_s2z*(1-mask)/counts))
