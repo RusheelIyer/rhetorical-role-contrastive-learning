@@ -188,7 +188,7 @@ class ProtoSimLoss(nn.Module):
         documents, sentences, _ = batch["input_ids"].shape
         labels = batch["label_ids"].to(device)
 
-        features = F.normalize(features, dim=2)
+        # features = F.normalize(features, dim=2)
 
         cp_loss = self.get_contrastive_loss(device, features, labels, sentences)
         cluster_loss = self.get_cluster_loss(device, features, labels, sentences, prototypes)

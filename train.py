@@ -121,7 +121,7 @@ class SentenceClassificationTrainer:
                         memory_bank = torch.cat((memory_bank, features), dim=1).detach()
                         memory_bank_labels = torch.cat((memory_bank_labels, batch["label_ids"]), dim=1).detach()
                 elif self.config['task_type'] == 'proto_sim':
-                    output, sentence_embeddings_encoded, prototypes = model(
+                    output, sentence_embeddings_encoded, features, prototypes = model(
                         batch=batch,
                         labels=batch["label_ids"]
                     )
@@ -139,7 +139,7 @@ class SentenceClassificationTrainer:
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
                 elif self.config['task_type'] == 'proto_sim':
-                    protosim_loss = self.ConLossFunc(batch, sentence_embeddings_encoded, prototypes)
+                    protosim_loss = self.ConLossFunc(batch, features, prototypes)
 
                     lambda_3 = 0.5
                     loss = (lambda_3*classification_loss) + protosim_loss

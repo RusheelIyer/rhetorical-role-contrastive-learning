@@ -70,7 +70,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             if (task_type == 'contrastive'):
                 output, sentence_embeddings_batch, features = model(batch=batch)
             elif (task_type == 'proto_sim'):
-                output, sentence_embeddings_batch, prototypes = model(batch=batch)
+                output, sentence_embeddings_batch, features, prototypes = model(batch=batch)
             else:
                 output, sentence_embeddings_batch = model(batch=batch)
 

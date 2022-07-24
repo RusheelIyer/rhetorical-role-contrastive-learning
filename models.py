@@ -281,6 +281,12 @@ class BertHSLNProto(torch.nn.Module):
                                                   dimension_context_vector_u=config["att_pooling_dim_ctx"],
                                                   number_context_vectors=config["att_pooling_num_ctx"])
 
+        self.head = torch.nn.Sequential(
+                torch.nn.Linear(config["dim_in"], config["dim_in"]),
+                torch.nn.ReLU(inplace=True),
+                torch.nn.Linear(config["dim_in"], config["feat_dim"])
+            )
+
         self.prototypes = torch.nn.Embedding(len(tasks[0].labels), 2 * self.lstm_hidden_size)
 
         self.init_sentence_enriching(config, tasks)
@@ -334,6 +340,8 @@ class BertHSLNProto(torch.nn.Module):
         # in Jin et al. only here dropout
         sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
 
+        features = F.normalize(self.head(sentence_embeddings_encoded), dim=2)
+
         if self.generic_output_layer:
             output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
         else:
@@ -341,4 +349,4 @@ class BertHSLNProto(torch.nn.Module):
 
         prototypes = self.prototypes(batch["label_ids"])
 
-        return output, sentence_embeddings_encoded, prototypes
+        return output, sentence_embeddings_encoded, features, prototypes
