@@ -45,7 +45,7 @@ def get_activation(name):
         activation[name] = output.detach()
     return hook
 
-def eval_model(model, eval_batches, device, task, contrastive, memory_bank = None, memory_bank_labels = None):
+def eval_model(model, eval_batches, device, task, task_type, memory_bank = None, memory_bank_labels = None):
     
     # register a hook to receive activations after sentence_lstm layer
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
@@ -67,8 +67,10 @@ def eval_model(model, eval_batches, device, task, contrastive, memory_bank = Non
             if batch["task"] != task.task_name:
                 continue
 
-            if (contrastive):
+            if (task_type == 'contrastive'):
                 output, sentence_embeddings_batch, features = model(batch=batch)
+            elif (task_type == 'proto_sim'):
+                output, sentence_embeddings_batch, prototypes = model(batch=batch)
             else:
                 output, sentence_embeddings_batch = model(batch=batch)
 
