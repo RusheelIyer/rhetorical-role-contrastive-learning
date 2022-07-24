@@ -225,19 +225,21 @@ class ProtoSimLoss(nn.Module):
 
     def get_cluster_loss(self, device, features, labels, sentences, prototypes):
 
-        old_mask = torch.eq(labels, labels.T).float().to(device)
+        mask = torch.eq(labels, labels.T).float().to(device)
+
+        anchor_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
         
         dists_z2s = torch.div(1, 1 + torch.exp(torch.matmul(prototypes, anchor_feature.T)))
         dists_s2z = torch.div(1, 1 + torch.exp(torch.matmul(anchor_feature, prototypes.T)))
 
-        pos_dists = ((torch.log(dists_s2z)* old_mask).sum(1)/old_mask.sum(1)).view(-1,1)
-        neg_dists = torch.log(1-dists_z2s)*(1-old_mask)
+        pos_dists = ((torch.log(dists_s2z)* mask).sum(1)/mask.sum(1)).view(-1,1)
+        neg_dists = torch.log(1-dists_z2s)*(1-mask)
 
         ls2z = ((pos_dists + neg_dists)*(1-old_mask)).sum()
 
-        counts = old_mask.sum(1).tile(sentences).view(sentences,sentences)
-        neg_dists_z_ = torch.log(1 - (dists_s2z*(1-old_mask)/counts))
-        pos_dists_z_ = pos_dists/old_mask.sum(1)*(1-old_mask)
+        counts = mask.sum(1).tile(sentences).view(sentences,sentences)
+        neg_dists_z_ = torch.log(1 - (dists_s2z*(1-mask)/counts))
+        pos_dists_z_ = pos_dists/mask.sum(1)*(1-mask)
 
         ls2z_ = (pos_dists_z_ + neg_dists).sum()
 
