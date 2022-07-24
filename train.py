@@ -1,7 +1,7 @@
 from prettytable import PrettyTable
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
-from losses import SupConLoss, SupConLossMemory
+from losses import SupConLoss, SupConLossMemory, ProtoSimLoss
 
 import torch
 import torch.nn.functional as F
@@ -30,7 +30,7 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
-        self.SupCon = SupConLossMemory()
+        self.ConLossFunc = ProtoSimLoss()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -108,7 +108,7 @@ class SentenceClassificationTrainer:
                 # move tensor to gpu
                 tensor_dict_to_gpu(batch, self.device)
 
-                if (self.config['contrastive']):
+                if self.config['task_type'] == 'contrastive':
                     output, sentence_embeddings_encoded, features = model(
                         batch=batch,
                         labels=batch["label_ids"]
@@ -120,6 +120,11 @@ class SentenceClassificationTrainer:
                     else:
                         memory_bank = torch.cat((memory_bank, features), dim=1).detach()
                         memory_bank_labels = torch.cat((memory_bank_labels, batch["label_ids"]), dim=1).detach()
+                elif self.config['task_type'] == 'proto_sim':
+                    output, sentence_embeddings_encoded, prototypes = model(
+                        batch=batch,
+                        labels=batch["label_ids"]
+                    )
                 else:
                     output, sentence_embeddings_encoded = model(
                         batch=batch,
@@ -127,13 +132,17 @@ class SentenceClassificationTrainer:
                     )
 
                 classification_loss = output["loss"].sum()
-                if (self.config['contrastive']):
-                    contrastive_loss = self.SupCon(batch, features, memory_bank, memory_bank_labels)
+                if self.config['task_type'] == 'contrastive':
+                    contrastive_loss = self.ConLossFunc(batch, features, memory_bank, memory_bank_labels)
                     #contrastive_loss = self.SupCon(memory_bank, memory_bank_labels, features)
                     
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
+                elif self.config['task_type'] == 'proto_sim':
+                    protosim_loss = self.ConLossFunc(batch, features, prototypes)
 
+                    lambda_3 = 0.5
+                    loss = (lambda_3*classification_loss) + protosim_loss
                 else:
                     loss = classification_loss
 

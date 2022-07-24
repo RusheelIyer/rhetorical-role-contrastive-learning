@@ -183,7 +183,7 @@ class BertHSLN(torch.nn.Module):
                                                   dimension_context_vector_u=config["att_pooling_dim_ctx"],
                                                   number_context_vectors=config["att_pooling_num_ctx"])
 
-        self.use_contrastive = config["contrastive"]
+        self.use_contrastive = config["task_type"] == 'contrastive'
 
         self.init_sentence_enriching(config, tasks)
         self.init_contrastive(config["dim_in"], config["feat_dim"])
@@ -255,3 +255,90 @@ class BertHSLN(torch.nn.Module):
             return output, sentence_embeddings_encoded, features
 
         return output, sentence_embeddings_encoded
+
+class BertHSLNProto(torch.nn.Module):
+    '''
+    Model for Baseline, Sequential Transfer Learning and Multitask-Learning with all layers shared (except output layer).
+    '''
+    def __init__(self, config, tasks):
+        super(BertHSLN, self).__init__()
+
+        self.bert = BertTokenEmbedder(config)
+
+        # Jin et al. uses DROPOUT WITH EXPECTATION-LINEAR REGULARIZATION (see Ma et al. 2016),
+        # we use instead default dropout
+        self.dropout = torch.nn.Dropout(config["dropout"])
+
+        self.generic_output_layer = config.get("generic_output_layer")
+
+        self.lstm_hidden_size = config["word_lstm_hs"]
+
+        self.word_lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(input_size=self.bert.bert_hidden_size,
+                                  hidden_size=self.lstm_hidden_size,
+                                  num_layers=1, batch_first=True, bidirectional=True))
+
+        self.attention_pooling = AttentionPooling(2 * self.lstm_hidden_size,
+                                                  dimension_context_vector_u=config["att_pooling_dim_ctx"],
+                                                  number_context_vectors=config["att_pooling_num_ctx"])
+
+        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), feat_dim)
+
+        self.init_sentence_enriching(config, tasks)
+        self.reinit_output_layer(tasks, config)
+
+
+    def init_sentence_enriching(self, config, tasks):
+        input_dim = self.attention_pooling.output_dim
+        print(f"Attention pooling dim: {input_dim}")
+        self.sentence_lstm = PytorchSeq2SeqWrapper(torch.nn.LSTM(input_size=input_dim,
+                                  hidden_size=self.lstm_hidden_size,
+                                  num_layers=1, batch_first=True, bidirectional=True))
+
+    def reinit_output_layer(self, tasks, config):
+        if config.get("without_context_enriching_transfer"):
+            self.init_sentence_enriching(config, tasks)
+        input_dim = self.lstm_hidden_size * 2
+
+        if self.generic_output_layer:
+            self.crf = CRFOutputLayer(in_dim=input_dim, num_labels=len(tasks[0].labels))
+        else:
+            self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
+            
+
+    def forward(self, batch, labels=None, output_all_tasks=False):
+
+        documents, sentences, tokens = batch["input_ids"].shape
+
+        # shape (documents*sentences, tokens, 768)
+        bert_embeddings = self.bert(batch)
+
+        # in Jin et al. only here dropout
+        bert_embeddings = self.dropout(bert_embeddings)
+
+        tokens_mask = batch["attention_mask"].view(-1, tokens)
+        # shape (documents*sentences, tokens, 2*lstm_hidden_size)
+        bert_embeddings_encoded = self.word_lstm(bert_embeddings, tokens_mask)
+
+        # shape (documents*sentences, pooling_out)
+        # sentence_embeddings = torch.mean(bert_embeddings_encoded, dim=1)
+        sentence_embeddings = self.attention_pooling(bert_embeddings_encoded, tokens_mask)
+        # shape: (documents, sentences, pooling_out)
+        sentence_embeddings = sentence_embeddings.view(documents, sentences, -1)
+        # in Jin et al. only here dropout
+        sentence_embeddings = self.dropout(sentence_embeddings)
+
+        sentence_mask = batch["sentence_mask"]
+
+        # shape: (documents, sentence, 2*lstm_hidden_size)
+        sentence_embeddings_encoded = self.sentence_lstm(sentence_embeddings, sentence_mask)
+        # in Jin et al. only here dropout
+        sentence_embeddings_encoded = self.dropout(sentence_embeddings_encoded)
+
+        if self.generic_output_layer:
+            output = self.crf(sentence_embeddings_encoded, sentence_mask, labels)
+        else:
+            output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
+
+        prototypes = self.prototypes(batch["label_ids"])
+
+        return output, sentence_embeddings_encoded, prototypes

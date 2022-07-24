@@ -18,7 +18,7 @@ BERT_MODEL = "bert-base-uncased"
 # BERT_VOCAB = "bert_model/scibert_scivocab_uncased/vocab.txt"
 #BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
-[_,use_contrastive] = sys.argv
+[_,task_type] = sys.argv
 
 config = {
     "bert_model": BERT_MODEL,
@@ -39,7 +39,7 @@ config = {
     "early_stopping": 5,
     "dim_in": 2*758,
     "feat_dim": 128,
-    "contrastive": (use_contrastive == 'True'),
+    "task_type": task_type
 }
 
 MAX_DOCS = -1
