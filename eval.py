@@ -49,6 +49,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     
     # register a hook to receive activations after sentence_lstm layer
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
+    model.prototypes.register_forward_hook(get_activation('prototypes'))
     model.eval()
 
     true_labels = []
@@ -58,6 +59,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     docwise_true_labels = []
     doc_name_list = []
     sentence_embeddings = []
+    prototypes = []
 
     with torch.no_grad():
         for batch in eval_batches:
@@ -70,7 +72,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             if (task_type == 'contrastive'):
                 output, sentence_embeddings_batch, features = model(batch=batch)
             elif (task_type == 'proto_sim'):
-                output, sentence_embeddings_batch, features, prototypes = model(batch=batch)
+                output, sentence_embeddings_batch, features, prototypes_batch = model(batch=batch)
             else:
                 output, sentence_embeddings_batch = model(batch=batch)
 
@@ -93,6 +95,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             predicted_labels.extend(predicted_labels_batch)
 
             sentence_embeddings.extend(sentence_embeddings_batch)
+            prototypes.extend(prototypes_batch)
 
             tensor_dict_to_cpu(batch)
     labels_dict['y_true']=true_labels
@@ -106,6 +109,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
 
     # Save the sentence embeddings to external file
     torch.save(sentence_embeddings, 'datasets/embeddings.pt')
+    torch.save(prototypes, 'datasets/prototypes.pt')
     
     return metrics, confusion, labels_dict, class_report
 
