@@ -147,7 +147,7 @@ class SentenceClassificationTrainer:
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
                 elif self.config['task_type'] == 'memory':
-                    contrastive_loss = self.ConLossFunc(batch, features, memory_bank, memory_bank_labels)
+                    contrastive_loss = self.ConLossFunc(memory_bank, memory_bank_labels, features)
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
                 elif self.config['task_type'] == 'proto_sim':
