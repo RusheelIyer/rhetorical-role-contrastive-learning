@@ -183,7 +183,7 @@ class BertHSLN(torch.nn.Module):
                                                   dimension_context_vector_u=config["att_pooling_dim_ctx"],
                                                   number_context_vectors=config["att_pooling_num_ctx"])
 
-        self.use_contrastive = config["task_type"] == 'contrastive'
+        self.use_contrastive = (config["task_type"] == 'contrastive') or (config["task_type"] == 'memory')
 
         self.init_sentence_enriching(config, tasks)
         self.init_contrastive(config["dim_in"], config["feat_dim"])
