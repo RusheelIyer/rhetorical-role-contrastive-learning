@@ -75,34 +75,6 @@ class SupConLossMemory(nn.Module):
         self.temperature = temperature
         self.SupCon = SupConLoss()
 
-    def forward(self, batch, features, memory_bank, memory_bank_labels):
-
-        contr_loss = self.SupCon(batch, features)
-
-        feature_labels = batch["label_ids"]
-        _, knn_loss = self.kNN(memory_bank, memory_bank_labels, features, feature_labels)
-
-        return contr_loss + knn_loss
-
-    def kNN(self, memory_bank, memory_bank_labels, features, feature_labels):
-
-        pred_labels = torch.zeros_like(feature_labels)
-
-        for i in range(features.shape[0]):
-            for j in range(features.shape[1]):
-                sentence = features[i][j].unsqueeze(0)
-                dist = torch.norm(memory_bank - sentence, dim=2, p=None)
-
-                _, knn_indices = dist.topk(10, largest=False)
-                pred_labels[i][j] = self.get_majority_label(memory_bank_labels[i][knn_indices])
-
-        total_labels = feature_labels.shape[1]
-
-        return pred_labels, (torch.eq(pred_labels, feature_labels).sum()/total_labels)*100
-
-    def get_majority_label(self, labels):
-        return torch.mode(labels).values.item()
-
     """
     Compute loss for model.
     Args:
@@ -110,22 +82,19 @@ class SupConLossMemory(nn.Module):
         features: hidden vector of shape [sentences, 128 (feat_dim)].
     Returns:
         A loss scalar.
-    
+    """
     def forward(self, memory_bank, memory_bank_labels, features):
 
         device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
         sentences = memory_bank.shape[1]
         
         labels = memory_bank_labels.to(device)
-        memory_bank.to(device)
 
-        contrast_feature = torch.cat(torch.unbind(memory_bank, dim=1), dim=0)
+        contrast_feature = torch.cat(torch.unbind(memory_bank, dim=1), dim=0).to(device)
         contrast_count = memory_bank.shape[1]
 
         anchor_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
         anchor_count = features.shape[1]
-
-        memory_bank.to('cpu') # Free up GPU
 
         if labels is not None:
             mask = torch.eq(labels, labels.T).float()
@@ -165,7 +134,6 @@ class SupConLossMemory(nn.Module):
         loss = -1 * mean_log_prob_pos
 
         return loss.sum()
-    """
 
 class ProtoSimLoss(nn.Module):
     

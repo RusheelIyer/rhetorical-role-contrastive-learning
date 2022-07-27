@@ -30,7 +30,12 @@ class SentenceClassificationTrainer:
 
         self.labels = task.labels
         self.task = task
-        self.ConLossFunc = ProtoSimLoss()
+        if (config["task_type"] == 'contrastive'):
+            self.ConLossFunc = SupConLoss()
+        elif (config["task_type"] == 'memory'):
+            self.ConLossFunc = SupConLossMemory()
+        elif (config["task_type"] == 'proto_sim'):
+            self.ConLossFunc = ProtoSimLoss()
 
     def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
         self.cur_result["fold"] = fold_num
@@ -113,6 +118,11 @@ class SentenceClassificationTrainer:
                         batch=batch,
                         labels=batch["label_ids"]
                     )
+                elif self.config['task_type'] == 'memory':
+                    output, sentence_embeddings_encoded, features = model(
+                        batch=batch,
+                        labels=batch["label_ids"]
+                    )
 
                     if (memory_bank == None):
                         memory_bank = features
@@ -133,9 +143,11 @@ class SentenceClassificationTrainer:
 
                 classification_loss = output["loss"].sum()
                 if self.config['task_type'] == 'contrastive':
+                    contrastive_loss = self.ConLossFunc(batch, features)
+                    cl_beta = 1
+                    loss = (classification_loss) + (cl_beta*contrastive_loss)
+                elif self.config['task_type'] == 'memory':
                     contrastive_loss = self.ConLossFunc(batch, features, memory_bank, memory_bank_labels)
-                    #contrastive_loss = self.SupCon(memory_bank, memory_bank_labels, features)
-                    
                     cl_beta = 1
                     loss = (classification_loss) + (cl_beta*contrastive_loss)
                 elif self.config['task_type'] == 'proto_sim':
