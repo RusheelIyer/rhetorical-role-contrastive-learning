@@ -49,7 +49,8 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     
     # register a hook to receive activations after sentence_lstm layer
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
-    model.prototypes.register_forward_hook(get_activation('prototypes'))
+    if task_type == 'proto_sim':
+        model.prototypes.register_forward_hook(get_activation('prototypes'))
     model.eval()
 
     true_labels = []
@@ -59,7 +60,8 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     docwise_true_labels = []
     doc_name_list = []
     sentence_embeddings = []
-    prototypes = []
+    if task_type == 'proto_sim':
+        prototypes = []
 
     with torch.no_grad():
         for batch in eval_batches:
@@ -69,7 +71,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             if batch["task"] != task.task_name:
                 continue
 
-            if (task_type == 'contrastive'):
+            if (task_type == 'contrastive') or (task_type == 'memory'):
                 output, sentence_embeddings_batch, features = model(batch=batch)
             elif (task_type == 'proto_sim'):
                 output, sentence_embeddings_batch, features, prototypes_batch = model(batch=batch)
@@ -95,7 +97,9 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             predicted_labels.extend(predicted_labels_batch)
 
             sentence_embeddings.extend(sentence_embeddings_batch)
-            prototypes.extend(prototypes_batch)
+            
+            if task_type == 'proto_sim':
+                prototypes.extend(prototypes_batch)
 
             tensor_dict_to_cpu(batch)
     labels_dict['y_true']=true_labels

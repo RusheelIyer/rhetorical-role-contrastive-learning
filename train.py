@@ -163,7 +163,8 @@ class SentenceClassificationTrainer:
                 optimizer.step()
                 optimizer.zero_grad()
 
-                # move batch to cpu again to save gpu memory
+                # clear cache and move batch to cpu again to save gpu memory
+                torch.cuda.empty_cache()
                 tensor_dict_to_cpu(batch)
 
                 if batch_num % 100 == 0:
