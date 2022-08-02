@@ -47,6 +47,22 @@ class SentenceClassificationTrainer:
         self.cur_result["test_confusion"] = test_confusion
 
         self.result_writer.write(json.dumps(self.cur_result))
+
+    """
+    Add 10 samples per label ID for the memory bank
+    """
+    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, return_bank=False):
+        
+        label_ids = self.task.labels
+
+        for label_id in label_ids:
+            indices = [i for i, x in enumerate(labels) if x == label_id]
+            sample_idxs = random.choices(indices, k=10)
+            memory_bank[label_id].extend([features[sample] for sample in sample_idxs])
+            memory_bank_labels[label_id].extend([labels[sample] for sample in sample_idxs])
+
+        if return_bank:
+            return memory_bank, memory_bank_labels
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
@@ -125,11 +141,10 @@ class SentenceClassificationTrainer:
                     )
 
                     if (memory_bank == None):
-                        memory_bank = features
-                        memory_bank_labels = batch["label_ids"]
+                        memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], {}, {}, True)
                     else:
-                        memory_bank = torch.cat((memory_bank, features), dim=1).detach()
-                        memory_bank_labels = torch.cat((memory_bank_labels, batch["label_ids"]), dim=1).detach()
+                        self.get_memory_features(features, batch["label_ids"], memory_bank)
+
                 elif self.config['task_type'] == 'proto_sim':
                     output, sentence_embeddings_encoded, features, prototypes = model(
                         batch=batch,
