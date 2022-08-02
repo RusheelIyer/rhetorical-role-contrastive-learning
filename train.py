@@ -53,13 +53,13 @@ class SentenceClassificationTrainer:
     """
     def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, return_bank=False):
         
-        label_ids = self.task.labels
+        label_ids = len(self.task.labels)
 
-        for label_id in label_ids:
-            indices = [i for i, x in enumerate(labels) if x == label_id]
+        for label_id in range(label_ids):
+            indices = (labels == label_id).nonzero(as_tuple=True)[0].tolist()
             sample_idxs = random.choices(indices, k=10)
-            memory_bank[label_id].extend([features[sample] for sample in sample_idxs])
-            memory_bank_labels[label_id].extend([labels[sample] for sample in sample_idxs])
+            torch.cat(memory_bank[label_id], features[sample_idxs], dim = 1)
+            torch.cat(memory_bank_labels[label_id], labels[sample_idxs], dim = 1)
 
         if return_bank:
             return memory_bank, memory_bank_labels
