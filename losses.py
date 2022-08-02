@@ -87,12 +87,10 @@ class SupConLossMemory(nn.Module):
 
         device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
         sentences = memory_bank.shape[1]
-        memory_bank.to(device)
-        memory_bank_labels.to(device)
         
-        labels = torch.cat((memory_bank_labels, batch["label_ids"]), dim=1).to(device)
+        labels = torch.cat((memory_bank_labels.to(device), batch["label_ids"]), dim=1).to(device)
 
-        contrast_feature = torch.cat(torch.unbind(torch.cat((memory_bank, features), dim=1), dim=1), dim=0).to(device)
+        contrast_feature = torch.cat(torch.unbind(torch.cat((memory_bank.to(device), features), dim=1), dim=1), dim=0).to(device)
         contrast_count = memory_bank.shape[1]
 
         anchor_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
