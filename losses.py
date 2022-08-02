@@ -83,7 +83,7 @@ class SupConLossMemory(nn.Module):
     Returns:
         A loss scalar.
     """
-    def forward(self, memory_bank, memory_bank_labels, features):
+    def forward(self, batch, features, memory_bank, memory_bank_labels):
 
         device = (torch.device('cuda') if features.is_cuda else torch.device('cpu'))
         sentences = memory_bank.shape[1]
