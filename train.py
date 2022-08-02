@@ -51,18 +51,27 @@ class SentenceClassificationTrainer:
     """
     Add 10 samples per label ID for the memory bank
     """
-    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, return_bank=False):
+    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels):
         
         label_ids = len(self.task.labels)
+        docs, _, feat_dim = features.shape
 
-        for label_id in range(label_ids):
-            indices = (labels == label_id).nonzero(as_tuple=True)[0].tolist()
-            sample_idxs = random.choices(indices, k=10)
-            torch.cat(memory_bank[label_id], features[sample_idxs], dim = 1)
-            torch.cat(memory_bank_labels[label_id], labels[sample_idxs], dim = 1)
+        memory_bank_new = torch.zeros(docs, 10, feat_dim)
+        memory_bank_labels_new = torch.zeros(docs, 10)
 
-        if return_bank:
-            return memory_bank, memory_bank_labels
+        for i in range(docs):
+            for label_id in range(1, label_ids, 1):
+                indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
+                
+                if (len(indices) > 0):
+                    sample_idxs = random.choices(indices, k=10)
+                    memory_bank_new[i] = features[i][sample_idxs]
+                    memory_bank_labels_new[i] = labels[i][sample_idxs]
+
+        if memory_bank is None:
+            return memory_bank_new, memory_bank_labels_new
+        else:
+            return torch.cat((memory_bank, memory_bank_new), dim=1), torch.cat((memory_bank_labels, memory_bank_labels_new), dim=1)
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
@@ -140,10 +149,7 @@ class SentenceClassificationTrainer:
                         labels=batch["label_ids"]
                     )
 
-                    if (memory_bank == None):
-                        memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], {}, {}, True)
-                    else:
-                        self.get_memory_features(features, batch["label_ids"], memory_bank)
+                    memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], memory_bank, memory_bank_labels)
 
                 elif self.config['task_type'] == 'proto_sim':
                     output, sentence_embeddings_encoded, features, prototypes = model(

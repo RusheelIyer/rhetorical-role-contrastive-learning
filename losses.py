@@ -90,7 +90,7 @@ class SupConLossMemory(nn.Module):
         
         labels = torch.cat(memory_bank_labels, batch["label_ids"], dim=1).to(device)
 
-        contrast_feature = torch.cat(torch.unbind(torch.cat(memory_bank, features, dim=1), dim=1), dim=0).to(device)
+        contrast_feature = torch.cat(torch.unbind(torch.cat((memory_bank, features), dim=1), dim=1), dim=0).to(device)
         contrast_count = memory_bank.shape[1]
 
         anchor_feature = torch.cat(torch.unbind(features, dim=1), dim=0)
