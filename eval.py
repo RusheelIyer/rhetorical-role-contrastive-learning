@@ -48,10 +48,10 @@ def get_activation(name):
 def eval_model(model, eval_batches, device, task, task_type, memory_bank = None, memory_bank_labels = None):
     
     # register a hook to receive activations after sentence_lstm layer
+    model.eval()
     model.sentence_lstm.register_forward_hook(get_activation('sentence_lstm'))
     if task_type == 'proto_sim':
         model.prototypes.register_forward_hook(get_activation('prototypes'))
-    model.eval()
 
     true_labels = []
     labels_dict={}
@@ -113,7 +113,8 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
 
     # Save the sentence embeddings to external file
     torch.save(sentence_embeddings, 'datasets/embeddings.pt')
-    torch.save(prototypes, 'datasets/prototypes.pt')
+    if task_type == 'proto_sim':
+        torch.save(prototypes, 'datasets/prototypes.pt')
     
     return metrics, confusion, labels_dict, class_report
 
