@@ -51,7 +51,7 @@ class SentenceClassificationTrainer:
     """
     Add 10 samples per label ID for the memory bank
     """
-    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels):
+    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, bank_type='random'):
         
         label_ids = len(self.task.labels)
         docs, _, feat_dim = features.shape
@@ -59,19 +59,41 @@ class SentenceClassificationTrainer:
         memory_bank_new = torch.zeros(docs, 10, feat_dim)
         memory_bank_labels_new = torch.zeros(docs, 10)
 
-        for i in range(docs):
-            for label_id in range(1, label_ids, 1):
-                indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
-                
-                if (len(indices) > 0):
-                    sample_idxs = random.choices(indices, k=10)
-                    memory_bank_new[i] = features[i][sample_idxs]
-                    memory_bank_labels_new[i] = labels[i][sample_idxs]
+        if bank_type == 'random':
+            for i in range(docs):
+                for label_id in range(1, label_ids, 1):
+                    indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
+                    
+                    if (len(indices) > 0):
+                        sample_idxs = random.choices(indices, k=10)
+                        memory_bank_new[i] = features[i][sample_idxs]
+                        memory_bank_labels_new[i] = labels[i][sample_idxs]
+        else:
+            for i in range(docs):
+                label_features = {}
+                for label_id in range(1, label_ids, 1):
+                    indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
+                    
+                    if len(indices) > 0:
+                        memory_bank_new[i] = self.get_closest_features(features[i][indices], 10)
+                        memory_bank_labels_new[i] = labels[i][indices[0:10]]
+
 
         if memory_bank is None:
             return memory_bank_new.detach(), memory_bank_labels_new.detach()
         else:
             return torch.cat((memory_bank, memory_bank_new), dim=1).detach(), torch.cat((memory_bank_labels, memory_bank_labels_new), dim=1).detach()
+
+    def get_closest_features(self, features, num_features):
+
+        if num_features < len(features.shape[0]):
+            sample_idxs = random.choices(range(features.shape[0]), k=num_features)
+            return features[sample_idxs]
+
+        if num_features == len(features.shape[0]):
+            return features
+
+        centroid = torch.mean(features, dim=0)
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
