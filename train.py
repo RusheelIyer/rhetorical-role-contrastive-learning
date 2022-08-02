@@ -69,9 +69,9 @@ class SentenceClassificationTrainer:
                     memory_bank_labels_new[i] = labels[i][sample_idxs]
 
         if memory_bank is None:
-            return memory_bank_new, memory_bank_labels_new
+            return memory_bank_new.detach(), memory_bank_labels_new.detach()
         else:
-            return torch.cat((memory_bank, memory_bank_new), dim=1), torch.cat((memory_bank_labels, memory_bank_labels_new), dim=1)
+            return torch.cat((memory_bank, memory_bank_new), dim=1).detach(), torch.cat((memory_bank_labels, memory_bank_labels_new), dim=1).detach()
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
