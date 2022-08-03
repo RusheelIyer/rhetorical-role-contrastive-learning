@@ -51,21 +51,24 @@ class SentenceClassificationTrainer:
     """
     Add 10 samples per label ID for the memory bank
     """
-    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, bank_type='random'):
+    def get_memory_features(self, features, labels, memory_bank, memory_bank_labels, bank_type='random', num_samples=10):
         
         label_ids = len(self.task.labels)
         docs, _, feat_dim = features.shape
 
-        memory_bank_new = torch.zeros(docs, 10, feat_dim)
-        memory_bank_labels_new = torch.zeros(docs, 10)
+        memory_bank_new = torch.zeros(docs, num_samples, feat_dim)
+        memory_bank_labels_new = torch.zeros(docs, num_samples)
 
         if bank_type == 'random':
             for i in range(docs):
                 for label_id in range(1, label_ids, 1):
                     indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
                     
-                    if (len(indices) > 0):
-                        sample_idxs = random.choices(indices, k=10)
+                    if (len(indices) > 0) and (len(indices) <= num_samples):
+                        memory_bank_new[i] = features[i]
+                        memory_bank_labels_new[i] = labels[i]
+                    elif len(indices) > num_samples:
+                        sample_idxs = random.sample(indices, num_samples)
                         memory_bank_new[i] = features[i][sample_idxs]
                         memory_bank_labels_new[i] = labels[i][sample_idxs]
         else:
@@ -75,8 +78,8 @@ class SentenceClassificationTrainer:
                     indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
                     
                     if len(indices) > 0:
-                        memory_bank_new[i] = self.get_closest_features(features[i][indices], 10)
-                        memory_bank_labels_new[i] = labels[i][indices[0:10]]
+                        memory_bank_new[i] = self.get_closest_features(features[i][indices], num_samples)
+                        memory_bank_labels_new[i] = labels[i][indices[0:num_samples]]
 
 
         if memory_bank is None:
