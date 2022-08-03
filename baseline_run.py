@@ -41,7 +41,7 @@ config = {
     "early_stopping": 5,
     "dim_in": 2*758,
     "feat_dim": 128,
-    "task_type": task_type
+    "task_type": task_type,
     "proto_type": 'bert_label'
 }
 
