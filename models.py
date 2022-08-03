@@ -291,10 +291,8 @@ class BertHSLNProto(torch.nn.Module):
             self.prototypes = torch.nn.Embedding(len(tasks[0].labels), config["feat_dim"])
         else:
             self.prototypes = {}
-            for label in tasks[0].labels:
-                self.prototypes[label] = BertTokenEmbedder(config)(label)
-                print(self.prototypes[label])
-                print(self.prototypes[label].shape)
+
+        self.task_labels = tasks[0].labels
 
         self.init_sentence_enriching(config, tasks)
         self.reinit_output_layer(tasks, config)
@@ -324,6 +322,12 @@ class BertHSLNProto(torch.nn.Module):
 
         # shape (documents*sentences, tokens, 768)
         bert_embeddings = self.bert(batch)
+
+        if self.prototypes == {}:
+            for label in self.task_labels:
+                self.prototypes[label] = self.bert(label)
+                print(self.prototypes[label])
+                print(self.prototypes[label].shape)
 
         # in Jin et al. only here dropout
         bert_embeddings = self.dropout(bert_embeddings)
