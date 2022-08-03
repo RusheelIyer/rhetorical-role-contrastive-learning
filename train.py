@@ -80,15 +80,18 @@ class SentenceClassificationTrainer:
                     
                     if len(indices) > 0:
                         memory_bank_new[i] = self.get_closest_features(features[i][indices], num_samples)
-                        memory_bank_labels_new[i] = labels[i][indices[0:num_samples]]
-
+                        memory_bank_labels_new[i] = labels[i][indices[0]].repeat(num_samples).contiguous().view(-1,1)
 
         if memory_bank is None:
             return memory_bank_new.detach(), memory_bank_labels_new.detach()
         else:
             return torch.cat((memory_bank, memory_bank_new), dim=1).detach(), torch.cat((memory_bank_labels, memory_bank_labels_new), dim=1).detach()
 
-    def get_closest_features(self, features, num_features):
+    """
+    Calculate centroid for feature set and return closest 10 samples to the centroid.
+    Functional use case: expects features belonging to same class.
+    """
+    def get_closest_features(self, features, num_samples):
 
         if num_features < len(features.shape[0]):
             sample_idxs = random.choices(range(features.shape[0]), k=num_features)
@@ -97,7 +100,14 @@ class SentenceClassificationTrainer:
         if num_features == len(features.shape[0]):
             return features
 
-        centroid = torch.mean(features, dim=0)
+        mean = torch.mean(features, dim=0)
+        centroid = torch.ones_like(features)*mean
+
+        pdist = torch.nn.PairwiseDistance(p=2)
+        distances = pdist(features, centroid)
+        min_idxs = torch.topk(dists, num_samples, largest=False).indices
+
+        return features[min_idxs]
         
     def run_training_for_fold(self, fold_num, fold: Fold, initial_model=None, return_best_model=False):
 
