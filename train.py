@@ -80,7 +80,7 @@ class SentenceClassificationTrainer:
                     
                     if len(indices) > 0:
                         memory_bank_new[i] = self.get_closest_features(features[i][indices], num_samples)
-                        memory_bank_labels_new[i] = labels[i][indices[0]].repeat(num_samples).contiguous().view(-1,1)
+                        memory_bank_labels_new[i] = labels[i][indices[0]].repeat(num_samples)
 
         if memory_bank is None:
             return memory_bank_new.detach(), memory_bank_labels_new.detach()
