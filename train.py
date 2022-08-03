@@ -65,8 +65,8 @@ class SentenceClassificationTrainer:
                     indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
                     
                     if (len(indices) > 0) and (len(indices) <= num_samples):
-                        memory_bank_new[i] = features[i]
-                        memory_bank_labels_new[i] = labels[i]
+                        memory_bank_new[i] = features[i][indices]
+                        memory_bank_labels_new[i] = labels[i][indices]
                     elif len(indices) > num_samples:
                         sample_idxs = random.sample(indices, num_samples)
                         memory_bank_new[i] = features[i][sample_idxs]
