@@ -93,11 +93,11 @@ class SentenceClassificationTrainer:
     """
     def get_closest_features(self, features, num_samples):
 
-        if num_samples < len(features.shape[0]):
+        if num_samples < features.shape[0]:
             sample_idxs = random.choices(range(features.shape[0]), k=num_samples)
             return features[sample_idxs]
 
-        if num_samples == len(features.shape[0]):
+        if num_samples == features.shape[0]:
             return features
 
         mean = torch.mean(features, dim=0)
@@ -105,7 +105,7 @@ class SentenceClassificationTrainer:
 
         pdist = torch.nn.PairwiseDistance(p=2)
         distances = pdist(features, centroid)
-        min_idxs = torch.topk(dists, num_samples, largest=False).indices
+        min_idxs = torch.topk(distances, num_samples, largest=False).indices
 
         return features[min_idxs]
         
