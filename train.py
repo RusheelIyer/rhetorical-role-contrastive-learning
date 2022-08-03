@@ -93,11 +93,11 @@ class SentenceClassificationTrainer:
     """
     def get_closest_features(self, features, num_samples):
 
-        if num_features < len(features.shape[0]):
-            sample_idxs = random.choices(range(features.shape[0]), k=num_features)
+        if num_samples < len(features.shape[0]):
+            sample_idxs = random.choices(range(features.shape[0]), k=num_samples)
             return features[sample_idxs]
 
-        if num_features == len(features.shape[0]):
+        if num_samples == len(features.shape[0]):
             return features
 
         mean = torch.mean(features, dim=0)
@@ -185,7 +185,7 @@ class SentenceClassificationTrainer:
                         labels=batch["label_ids"]
                     )
 
-                    memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], memory_bank, memory_bank_labels)
+                    memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], memory_bank, memory_bank_labels, bank_type='centroid')
 
                 elif self.config['task_type'] == 'proto_sim':
                     output, sentence_embeddings_encoded, features, prototypes = model(
