@@ -93,7 +93,7 @@ class SentenceClassificationTrainer:
     """
     def get_closest_features(self, features, num_samples):
 
-        if num_samples < features.shape[0]:
+        if features.shape[0] < num_samples:
             sample_idxs = random.choices(range(features.shape[0]), k=num_samples)
             return features[sample_idxs]
 
