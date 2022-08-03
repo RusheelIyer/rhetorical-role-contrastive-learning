@@ -64,11 +64,12 @@ class SentenceClassificationTrainer:
                 for label_id in range(1, label_ids, 1):
                     indices = (labels[i] == label_id).nonzero(as_tuple=True)[0].tolist()
                     
-                    if (len(indices) > 0) and (len(indices) <= num_samples):
-                        memory_bank_new[i] = features[i][indices]
-                        memory_bank_labels_new[i] = labels[i][indices]
-                    elif len(indices) > num_samples:
-                        sample_idxs = random.sample(indices, num_samples)
+                    if (len(indices) > 0):
+                        if (len(indices) <= num_samples):
+                            sample_idxs = random.choices(indices, k=num_samples)
+                        else:
+                            sample_idxs = random.sample(indices, num_samples)
+                        
                         memory_bank_new[i] = features[i][sample_idxs]
                         memory_bank_labels_new[i] = labels[i][sample_idxs]
         else:
