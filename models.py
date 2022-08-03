@@ -287,7 +287,14 @@ class BertHSLNProto(torch.nn.Module):
                 torch.nn.Linear(config["dim_in"], config["feat_dim"])
             )
 
-        self.prototypes = torch.nn.Embedding(len(tasks[0].labels), config["feat_dim"])
+        if config["proto_type"] == 'embedding':
+            self.prototypes = torch.nn.Embedding(len(tasks[0].labels), config["feat_dim"])
+        else:
+            self.prototypes = {}
+            for label in tasks[0].labels:
+                self.prototypes[label] = BertTokenEmbedder(config)(label)
+                print(self.prototypes[label])
+                print(self.prototypes[label].shape)
 
         self.init_sentence_enriching(config, tasks)
         self.reinit_output_layer(tasks, config)
@@ -311,7 +318,7 @@ class BertHSLNProto(torch.nn.Module):
             self.crf = CRFPerTaskOutputLayer(input_dim, tasks)
             
 
-    def forward(self, batch, labels=None, output_all_tasks=False):
+    def forward(self, batch, labels=None, output_all_tasks=False, proto_type='embedding'):
 
         documents, sentences, tokens = batch["input_ids"].shape
 
@@ -347,6 +354,9 @@ class BertHSLNProto(torch.nn.Module):
         else:
             output = self.crf(batch["task"], sentence_embeddings_encoded, sentence_mask, labels, output_all_tasks)
 
-        prototypes = self.prototypes(batch["label_ids"])
+        if (proto_type == 'embedding'):
+            prototypes = self.prototypes(batch["label_ids"])
+        else:
+            prototypes = self.prototypes
 
         return output, sentence_embeddings_encoded, features, prototypes

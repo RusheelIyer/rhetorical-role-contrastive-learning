@@ -190,7 +190,8 @@ class SentenceClassificationTrainer:
                 elif self.config['task_type'] == 'proto_sim':
                     output, sentence_embeddings_encoded, features, prototypes = model(
                         batch=batch,
-                        labels=batch["label_ids"]
+                        labels=batch["label_ids"],
+                        proto_type=self.config['proto_type']
                     )
                 else:
                     output, sentence_embeddings_encoded = model(
