@@ -4,7 +4,8 @@ import datetime
 from threading import Lock
 
 from prettytable import PrettyTable
-
+import pandas as pd
+import numpy
 
 def log(str):
     print(str, file=sys.stderr)
@@ -74,3 +75,13 @@ def print_model_parameters(model):
     print(f"Total Trainable Params: {total_params}")
     return total_params
 
+def calc_wss(embeddings, labels, dim=1516):
+
+    df = pd.DataFrame(embeddings)
+    df['label'] = labels
+
+    centers = df.groupby('label').mean()
+    centers = df.merge(centers, how="left", right_index = True, left_on='label').iloc[:,(dim+1):]
+    diff = (df.iloc[:,:dim].to_numpy() - centers.to_numpy())**2
+
+    return diff.sum()

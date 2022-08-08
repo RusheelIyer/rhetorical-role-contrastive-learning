@@ -4,3 +4,5 @@ datasets/pubmed-20k/*.txt
 datasets/*.json
 datasets/*.txt
 .DS_Store
+temp.py
+datasets/paheli-dataset/*.txt

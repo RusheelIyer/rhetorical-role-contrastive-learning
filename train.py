@@ -37,7 +37,7 @@ class SentenceClassificationTrainer:
         elif (config["task_type"] == 'proto_sim'):
             self.ConLossFunc = ProtoSimLoss()
 
-    def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion):
+    def write_results(self, fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion, cluster_metrics):
         self.cur_result["fold"] = fold_num
         self.cur_result["epoch"] = epoch
         self.cur_result["train_duration"] = train_duration
@@ -45,6 +45,7 @@ class SentenceClassificationTrainer:
         self.cur_result["dev_confusion"] = dev_confusion
         self.cur_result["test_metrics"] = test_metrics
         self.cur_result["test_confusion"] = test_confusion
+        self.cur_result["cluster_metrics"] = cluster_metrics
 
         self.result_writer.write(json.dumps(self.cur_result))
 
@@ -235,12 +236,12 @@ class SentenceClassificationTrainer:
             # evaluate model
             results={}
             self.result_writer.log(f'evaluating model...')
-            dev_metrics, dev_confusion,labels_dict, _ = eval_model(model, dev_batches, self.device, self.task, self.config['task_type'])
+            dev_metrics, dev_confusion,labels_dict, _, cluster_metrics = eval_model(model, dev_batches, self.device, self.task, self.config['task_type'])
             results['dev_metrics']=dev_metrics
             results['dev_confusion'] = dev_confusion
             results['labels_dict'] = labels_dict
             results['classification_report']=_
-
+            results['cluster_metrics']=cluster_metrics
 
             if dev_metrics[self.task.dev_metric] > best_dev_result:
                 if return_best_model:
@@ -254,9 +255,12 @@ class SentenceClassificationTrainer:
                 results['dev_confusion'] = dev_confusion
                 results['labels_dict'] = labels_dict
                 results['classification_report']=_
+                results['silhouette_score']=cluster_metrics['silhouette_score']
+                results['calinski_harabasz_score']=cluster_metrics['calinski_harabasz_score']
+                results['davies_bouldin_score']=cluster_metrics['davies_bouldin_score']
+                results['wcss']=cluster_metrics['wcss']
 
-
-                self.write_results(fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion)
+                self.write_results(fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion, cluster_metrics)
                 self.result_writer.log(
                     f'*** fold: {fold_num},  epoch: {epoch}, train duration: {train_duration}, dev {self.task.dev_metric}: {dev_metrics[self.task.dev_metric]}, test weighted-F1: {test_metrics["weighted-f1"]}, test macro-F1: {test_metrics["macro-f1"]}, test accuracy: {test_metrics["acc"]}')
             else:

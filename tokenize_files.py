@@ -42,8 +42,4 @@ def tokenize():
     write_in_hsln_format(dev_json_format, 'datasets/pubmed-20k/dev_scibert.txt', tokenizer)
     write_in_hsln_format(test_json_format, 'datasets/pubmed-20k/test_scibert.txt', tokenizer)
 
-
-
-
-
 tokenize()

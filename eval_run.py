@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 import os
-from task import pubmed_task
+from task import pubmed_task, bhatt_task
 import re
 import matplotlib
 matplotlib.use('Agg')

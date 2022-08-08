@@ -1,8 +1,8 @@
 import torch
-from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, accuracy_score, silhouette_score, calinski_harabasz_score, davies_bouldin_score
 import numpy as np
 
-from utils import tensor_dict_to_gpu, tensor_dict_to_cpu
+from utils import tensor_dict_to_gpu, tensor_dict_to_cpu, calc_wss
 
 
 def calc_classification_metrics(y_true, y_predicted, labels):
@@ -111,12 +111,19 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     metrics, confusion, class_report = \
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
 
+        cluster_metrics = {
+            'silhouette_score': silhouette_score(sentence_embeddings, true_labels),
+            'calinski_harabasz_score': calinski_harabasz_score(sentence_embeddings, true_labels),
+            'davies_bouldin_score': davies_bouldin_score(sentence_embeddings, true_labels),
+            'wcss': calc_wss(sentence_embeddings, true_labels)
+        }
+
     # Save the sentence embeddings to external file
     torch.save(sentence_embeddings, 'datasets/embeddings.pt')
     if task_type == 'proto_sim':
         torch.save(prototypes, 'datasets/prototypes.pt')
     
-    return metrics, confusion, labels_dict, class_report
+    return metrics, confusion, labels_dict, class_report, cluster_metrics
 
 '''
 Params:
