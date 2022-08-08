@@ -250,7 +250,7 @@ class SentenceClassificationTrainer:
                 early_stopping_counter = 0
                 self.result_writer.log(f"New best dev {self.task.dev_metric} {best_dev_result}!")
                 results={}
-                test_metrics, test_confusion,labels_dict,_ = eval_model(model, test_batches, self.device, self.task, self.config['task_type'])
+                test_metrics, test_confusion,labels_dict,_, cluster_metrics = eval_model(model, test_batches, self.device, self.task, self.config['task_type'])
                 results['dev_metrics']=dev_metrics
                 results['dev_confusion'] = dev_confusion
                 results['labels_dict'] = labels_dict

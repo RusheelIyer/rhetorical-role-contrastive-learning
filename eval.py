@@ -96,7 +96,7 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
             true_labels.extend(true_labels_batch)
             predicted_labels.extend(predicted_labels_batch)
 
-            sentence_embeddings.extend(sentence_embeddings_batch)
+            sentence_embeddings.extend(sentence_embeddings_batch.cpu())
             
             if task_type == 'proto_sim':
                 prototypes.extend(prototypes_batch)
@@ -111,11 +111,13 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     metrics, confusion, class_report = \
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
 
+    embeddings_tensor = torch.cat(sentence_embeddings)
+
     cluster_metrics = {
-        'silhouette_score': silhouette_score(sentence_embeddings.cpu(), true_labels),
-        'calinski_harabasz_score': calinski_harabasz_score(sentence_embeddings.cpu(), true_labels),
-        'davies_bouldin_score': davies_bouldin_score(sentence_embeddings.cpu(), true_labels),
-        'wcss': calc_wss(sentence_embeddings.cpu(), true_labels)
+        'silhouette_score': silhouette_score(embeddings_tensor, true_labels),
+        'calinski_harabasz_score': calinski_harabasz_score(embeddings_tensor, true_labels),
+        'davies_bouldin_score': davies_bouldin_score(embeddings_tensor, true_labels),
+        'wcss': calc_wss(embeddings_tensor, true_labels)
     }
 
     # Save the sentence embeddings to external file

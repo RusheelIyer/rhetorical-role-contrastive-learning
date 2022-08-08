@@ -77,7 +77,7 @@ def print_model_parameters(model):
 
 def calc_wss(embeddings, labels, dim=1516):
 
-    df = pd.DataFrame(embeddings)
+    df = pd.DataFrame(embeddings.numpy())
     df['label'] = labels
 
     centers = df.groupby('label').mean()
