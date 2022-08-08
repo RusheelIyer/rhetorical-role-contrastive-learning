@@ -67,7 +67,7 @@ def split_into_sentences_tokenize_write(prediction_input_ls_format, custom_proce
 
 
 if __name__ == "__main__":
-    #[_, custom_data_path, custom_processed_data_path] = sys.argv
+    [_, custom_data_path, custom_processed_data_path] = sys.argv
     # prediction_input_files_path = '/data/hsln_prediction/input_data_rgnlu.json' ###### in label studio format
     #     prediction_input_files_path = '/data/hsln_prediction/input_data_rgnlu.json'
     #     prediction_input_ls_format=[  {"id": 1,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
         {'id': id, 'data': {'preamble_text': preamble_text, 'judgement_text': judgement_text,
                             'text': preamble_text + " " + judgement_text}}]
 
-    #prediction_input_ls_format = json.load(open(custom_data_path))
+    prediction_input_ls_format = json.load(open(custom_data_path))
     # prediction_input_ls_format = json.load(open(prediction_input_files_path))
     nlp = get_spacy_nlp_pipeline_for_indian_legal_text(model_name="en_core_web_trf",
                                                        disable=["attribute_ruler", "lemmatizer", 'ner'])
@@ -99,4 +99,4 @@ if __name__ == "__main__":
 
     MAX_DOCS = -1
 
-    split_into_sentences_tokenize_write(input_ls_format, '/', nlp)
+    split_into_sentences_tokenize_write(prediction_input_ls_format, custom_processed_data_path, nlp)
