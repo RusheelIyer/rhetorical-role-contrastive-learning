@@ -111,12 +111,12 @@ def eval_model(model, eval_batches, device, task, task_type, memory_bank = None,
     metrics, confusion, class_report = \
         calc_classification_metrics(y_true=true_labels, y_predicted=predicted_labels, labels=task.labels)
 
-        cluster_metrics = {
-            'silhouette_score': silhouette_score(sentence_embeddings, true_labels),
-            'calinski_harabasz_score': calinski_harabasz_score(sentence_embeddings, true_labels),
-            'davies_bouldin_score': davies_bouldin_score(sentence_embeddings, true_labels),
-            'wcss': calc_wss(sentence_embeddings, true_labels)
-        }
+    cluster_metrics = {
+        'silhouette_score': silhouette_score(sentence_embeddings, true_labels),
+        'calinski_harabasz_score': calinski_harabasz_score(sentence_embeddings, true_labels),
+        'davies_bouldin_score': davies_bouldin_score(sentence_embeddings, true_labels),
+        'wcss': calc_wss(sentence_embeddings, true_labels)
+    }
 
     # Save the sentence embeddings to external file
     torch.save(sentence_embeddings, 'datasets/embeddings.pt')
