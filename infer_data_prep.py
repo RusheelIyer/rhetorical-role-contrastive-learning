@@ -6,6 +6,8 @@ import spacy
 from tqdm import tqdm
 from transformers import BertTokenizer
 
+from torchserve.api_inference_helper import get_text_from_indiankanoon_url
+
 from data_prep import attach_short_sentence_boundries_to_next, seperate_and_clean_preamble, \
     get_spacy_nlp_pipeline_for_preamble
 from data_prep import get_spacy_nlp_pipeline_for_indian_legal_text
