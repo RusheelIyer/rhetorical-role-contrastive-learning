@@ -1,11 +1,12 @@
 import json
 import os
 
-dataset_path = 'paheli-dataset/'
+dataset_path = 'datasets/paheli-dataset/'
 
 directory = os.fsencode(dataset_path)
 
 file_id = 1
+json_files = []
 for file in os.listdir(directory):
     filepath = os.fsdecode(file)
     if not filepath.endswith('.txt'):
@@ -22,7 +23,9 @@ for file in os.listdir(directory):
             }
         }
 
-        with open(json_path, 'w') as outfile:
-            json.dump(file_dict, outfile)
+        json_files.append(file_dict)
 
     file_id +=1
+
+with open('paheli-data.json', 'w') as outfile:
+    json.dump(json_files, outfile)
