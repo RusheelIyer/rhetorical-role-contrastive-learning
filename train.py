@@ -255,10 +255,7 @@ class SentenceClassificationTrainer:
                 results['dev_confusion'] = dev_confusion
                 results['labels_dict'] = labels_dict
                 results['classification_report']=_
-                results['silhouette_score']=cluster_metrics['silhouette_score']
-                results['calinski_harabasz_score']=cluster_metrics['calinski_harabasz_score']
-                results['davies_bouldin_score']=cluster_metrics['davies_bouldin_score']
-                results['wcss']=cluster_metrics['wcss']
+                results['cluster_metrics']=cluster_metrics
 
                 self.write_results(fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion, cluster_metrics)
                 self.result_writer.log(

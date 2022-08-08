@@ -8,7 +8,7 @@ from transformers import BertTokenizer
 import models
 from eval import eval_model
 from models import BertHSLN, BertHSLNProto
-from task import pubmed_task
+from task import pubmed_task, bhatt_task
 from utils import get_device
 
 
@@ -18,7 +18,7 @@ def create_task(create_func):
 
 def infer(model_path, max_docs, prediction_output_json_path, device):
     ######### This function loads the model from given model path and predefined data. It then predicts the rhetorical roles and returns
-    task = create_task(pubmed_task)
+    task = create_task(bhatt_task)
     model = getattr(models, config["model"])(config, [task]).to(device)
     model.load_state_dict(torch.load(model_path))
 
@@ -110,7 +110,7 @@ if __name__=="__main__":
     MAX_DOCS = -1
     device = get_device(0)
     
-    hsln_format_txt_dirpath ='datasets/pubmed-20k'
+    hsln_format_txt_dirpath ='datasets/bhattacharya'
     write_in_hsln_format(input_dir,hsln_format_txt_dirpath,tokenizer)
     filename_sent_boundries = json.load(open(hsln_format_txt_dirpath + '/sentece_boundries.json'))
     predictions = infer(model_path, MAX_DOCS, prediction_output_json_path, device)
