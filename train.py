@@ -186,7 +186,7 @@ class SentenceClassificationTrainer:
                         labels=batch["label_ids"]
                     )
 
-                    memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], memory_bank, memory_bank_labels, bank_type='centroid')
+                    memory_bank, memory_bank_labels = self.get_memory_features(features, batch["label_ids"], memory_bank, memory_bank_labels)
 
                 elif self.config['task_type'] == 'proto_sim':
                     output, sentence_embeddings_encoded, features, prototypes = model(
