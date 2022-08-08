@@ -24,13 +24,15 @@ def infer(model_path, max_docs, prediction_output_json_path, device):
 
     folds = task.get_folds()
     test_batches = folds[0].test
-    metrics, confusion, labels_dict, class_report = eval_model(model, test_batches, device, task, config["task_type"])
+    metrics, confusion, labels_dict, class_report, cluster_metrics = eval_model(model, test_batches, device, task, config["task_type"])
 
     print(metrics)
     print('------------------------------------')
     print(confusion)
     print('------------------------------------')
     print(class_report)
+    print('------------------------------------')
+    print(cluster_metrics)
     print('------------------------------------')
 
     # Save the true and predicted labels to external file
