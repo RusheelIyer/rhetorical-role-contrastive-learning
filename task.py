@@ -15,6 +15,9 @@ PUBMED_LABELS_PRES = ["DEFAULT", 'mask', "NONE", "PREAMBLE", "FAC", "ISSUE", "AR
 BHATT_LABELS = ["DEFAULT", 'mask', "Facts", "Ruling by Lower Court", "Argument", "Statute", "Precedent", "Ratio of the decision", "Ruling by Present Court"]
 BHATT_LABELS_PRES = ["DEFAULT", 'mask', "Facts", "Ruling by Lower Court", "Argument", "Statute", "Precedent", "Ratio of the decision", "Ruling by Present Court"]
 
+VETCLAIMS_LABELS = ["DEFAULT", 'mask', "Sentence", "FindingSentence", "CitationSentence", "ReasoningSentence", "EvidenceSentence", "LegalRuleSentence"]
+VETCLAIMS_LABELS_PRES = ["DEFAULT", 'mask', "Sentence", "FindingSentence", "CitationSentence", "ReasoningSentence", "EvidenceSentence", "LegalRuleSentence"]
+
 # NICTA_LABELS =["NONE", "FAC", "ISSUE", "ARG", "ANALYSIS", "PRE", "STA","RLC", "RPC","RATIO"]
 # NICTA_LABELS_PRES =["NONE", "FAC", "ISSUE", "ARG", "ANALYSIS", "PRE", "STA","RLC", "RPC","RATIO"]
 #
@@ -39,13 +42,14 @@ PUBMED_TASK = "pubmed-20k"
 NICTA_TASK = "nicta_piboso"
 ART_TASK = "ART"
 BHATT_TASK = "bhattacharya"
+VETCLAIMS_TASK = "vetclaims"
 
 GEN_DRI_TASK = "DRI_generic"
 GEN_PMD_TASK = "PMD_generic"
 GEN_NIC_TASK = "NIC_generic"
 GEN_ART_TASK = "ART_generic"
 GEN_BHATT_TASK = "BHATT_generic"
-
+GEN_VETCLAIMS_TASK = "VETCLAIMS_generic"
 
 def tgeneric_task(task_name, train_batch_size, max_docs):
     return Task(task_name, GEN_LABELS,
@@ -95,6 +99,11 @@ def nicta_task(train_batch_size, max_docs):
 def bhatt_task(train_batch_size, max_docs, data_folder="datasets/"):
     return Task(BHATT_TASK, BHATT_LABELS,
                 train_batch_size, 1, max_docs, short_name="BHATT", labels_pres=BHATT_LABELS_PRES,
+                data_folder=data_folder)
+
+def vetclaims_task(train_batch_size, max_docs, data_folder="datasets/"):
+    return Task(VETCLAIMS_TASK, VETCLAIMS_LABELS,
+                train_batch_size, 1, max_docs, short_name="VETCLAIMS", labels_pres=VETCLAIMS_LABELS_PRES,
                 data_folder=data_folder)
 
 class Fold:
