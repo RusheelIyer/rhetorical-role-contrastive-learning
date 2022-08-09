@@ -3,7 +3,7 @@ import json
 import pandas as pd
 import numpy as np
 import os
-from task import pubmed_task, bhatt_task
+from task import pubmed_task, bhatt_task, vetclaims_task
 import re
 import matplotlib
 matplotlib.use('Agg')
@@ -120,6 +120,8 @@ def create_generic_task(task_name):
 def get_all_tasks():
     result = []
     result.append(pubmed_task(train_batch_size=-1, max_docs=-1))
+    result.append(vetclaims_task(train_batch_size=-1, max_docs=-1))
+    result.append(bhatt_task(train_batch_size=-1, max_docs=-1))
     """
     result.append(pubmed_task_small(train_batch_size=-1, max_docs=-1))
     result.append(nicta_task(train_batch_size=-1, max_docs=-1))
