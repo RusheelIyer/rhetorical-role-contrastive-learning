@@ -8,7 +8,7 @@ import torch
 
 from eval_run import eval_and_save_metrics
 from utils import get_device, ResultWriter, log
-from task import pubmed_task, bhatt_task
+from task import pubmed_task, bhatt_task, vetclaims_task
 from train import SentenceClassificationTrainer
 from models import BertHSLN, BertHSLNProto
 import os
@@ -56,7 +56,7 @@ def create_generic_task(task_name):
 
 # ADAPT: Uncomment the task that has to be trained and comment all other tasks out
 # task = create_task(pubmed_task)
-task = create_task(bhatt_task)
+task = create_task(vetclaims_task)
 #task = create_task(pubmed_task_small)
 #task = create_task(nicta_task)
 #task = create_task(dri_task)

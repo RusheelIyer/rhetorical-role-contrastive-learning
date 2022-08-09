@@ -32,14 +32,14 @@ def write_in_hsln_format(input,hsln_format_txt_dirpath,tokenizer):
         file.write(final_string)
 
 def tokenize():
-    [_, train_input_json,dev_input_json,test_input_json] = sys.argv
+    [_, train_input_json,dev_input_json,test_input_json, data_folder] = sys.argv
     tokenizer = BertTokenizer.from_pretrained(BERT_VOCAB, do_lower_case=True)
     train_json_format = json.load(open(train_input_json))
     dev_json_format = json.load(open(dev_input_json))
     test_json_format = json.load(open(test_input_json))
   
-    write_in_hsln_format(train_json_format,'datasets/bhattacharya/train_scibert.txt',tokenizer)
-    write_in_hsln_format(dev_json_format, 'datasets/bhattacharya/dev_scibert.txt', tokenizer)
-    write_in_hsln_format(test_json_format, 'datasets/bhattacharya/test_scibert.txt', tokenizer)
+    write_in_hsln_format(train_json_format,'datasets/'+data_folder+'/train_scibert.txt',tokenizer)
+    write_in_hsln_format(dev_json_format, 'datasets/'+data_folder+'/dev_scibert.txt', tokenizer)
+    write_in_hsln_format(test_json_format, 'datasets/'+data_folder+'/test_scibert.txt', tokenizer)
 
 tokenize()
