@@ -16,9 +16,15 @@ def create_task(create_func):
     return create_func(train_batch_size=config["batch_size"], max_docs=MAX_DOCS)
 
 
-def infer(model_path, max_docs, prediction_output_json_path, device):
+def infer(model_path, max_docs, prediction_output_json_path, device, data_folder):
     ######### This function loads the model from given model path and predefined data. It then predicts the rhetorical roles and returns
-    task = create_task(vetclaims_task)
+    if data_folder == 'pubmed-20k':
+      task = create_task(pubmed_task)
+    elif data_folder == 'vetclaims':
+      task = create_task(vetclaims_task)
+    else:
+      task = create_task(bhatt_task)
+
     model = getattr(models, config["model"])(config, [task]).to(device)
     model.load_state_dict(torch.load(model_path))
 
@@ -113,7 +119,7 @@ if __name__=="__main__":
     hsln_format_txt_dirpath ='datasets/'+data_folder
     write_in_hsln_format(input_dir,hsln_format_txt_dirpath,tokenizer)
     filename_sent_boundries = json.load(open(hsln_format_txt_dirpath + '/sentece_boundries.json'))
-    predictions = infer(model_path, MAX_DOCS, prediction_output_json_path, device)
+    predictions = infer(model_path, MAX_DOCS, prediction_output_json_path, device, data_folder)
     
     ##### write the output in format needed by revision script
     for doc_name,predicted_labels in zip(predictions['doc_names'],predictions['docwise_y_predicted']):
