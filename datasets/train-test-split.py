@@ -1,13 +1,13 @@
 import json
 import random
 
-file_name = 'paheli-data.json'
-number_train_samples = 40
-number_dev = 5
+file_name = 'vetclaims-all-data.json'
+number_train_samples = 60
+number_dev = 8
 
-train_path = 'paheli-train.json'
-dev_path = 'paheli-dev.json'
-test_path = 'paheli-test.json'
+train_path = 'vetclaims-train.json'
+dev_path = 'vetclaims-dev.json'
+test_path = 'vetclaims-test.json'
 
 with open(file_name, 'r') as file:
     annotated_docs = json.load(file)
@@ -18,9 +18,9 @@ train_data = annotated_docs[:number_train_samples]
 dev_data = annotated_docs[number_train_samples:number_train_samples+number_dev]
 test_data = annotated_docs[number_train_samples+number_dev:]
 
-print(len(train_data))
-print(len(dev_data))
-print(len(test_data))
+print("Train samples: ", len(train_data))
+print("Dev samples: ", len(dev_data))
+print("Test samples: ", len(test_data))
 
 with open(train_path, 'w') as train_file:
     json.dump(train_data, train_file)
