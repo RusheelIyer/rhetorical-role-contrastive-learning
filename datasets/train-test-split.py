@@ -1,13 +1,13 @@
 import json
 import random
 
-file_name = 'vetclaims-all-data.json'
-number_train_samples = 65
+file_name = 'paheli-data.json'
+number_train_samples = 40
 number_dev = 5
 
-train_path = 'vetclaims-train.json'
-dev_path = 'vetclaims-dev.json'
-test_path = 'vetclaims-test.json'
+train_path = 'paheli-train.json'
+dev_path = 'paheli-dev.json'
+test_path = 'paheli-test.json'
 
 with open(file_name, 'r') as file:
     annotated_docs = json.load(file)
