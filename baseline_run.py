@@ -18,7 +18,7 @@ BERT_MODEL = "bert-base-uncased"
 # BERT_VOCAB = "bert_model/scibert_scivocab_uncased/vocab.txt"
 #BERT_MODEL = "allenai/scibert_scivocab_uncased"
 
-[_,task_type] = sys.argv
+[_,task_type, data_folder] = sys.argv
 
 model_name = BertHSLNProto.__name__ if task_type == 'proto_sim' else BertHSLN.__name__
 
@@ -56,7 +56,12 @@ def create_generic_task(task_name):
 
 # ADAPT: Uncomment the task that has to be trained and comment all other tasks out
 # task = create_task(pubmed_task)
-task = create_task(vetclaims_task)
+if data_folder == 'pubmed-20k':
+    task = create_task(pubmed_task)
+elif data_folder == 'vetclaims':
+    task = create_task(vetclaims_task)
+else:
+    task = create_task(bhatt_task)
 #task = create_task(pubmed_task_small)
 #task = create_task(nicta_task)
 #task = create_task(dri_task)
