@@ -242,6 +242,7 @@ class SentenceClassificationTrainer:
             results['labels_dict'] = labels_dict
             results['classification_report']=_
             results['cluster_metrics']=cluster_metrics
+            self.write_results(fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion, cluster_metrics)
 
             if dev_metrics[self.task.dev_metric] > best_dev_result:
                 if return_best_model:
@@ -257,7 +258,6 @@ class SentenceClassificationTrainer:
                 results['classification_report']=_
                 results['cluster_metrics']=cluster_metrics
 
-                self.write_results(fold_num, epoch, train_duration, dev_metrics, dev_confusion, test_metrics, test_confusion, cluster_metrics)
                 self.result_writer.log(
                     f'*** fold: {fold_num},  epoch: {epoch}, train duration: {train_duration}, dev {self.task.dev_metric}: {dev_metrics[self.task.dev_metric]}, test weighted-F1: {test_metrics["weighted-f1"]}, test macro-F1: {test_metrics["macro-f1"]}, test accuracy: {test_metrics["acc"]}')
             else:
