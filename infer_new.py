@@ -4,6 +4,7 @@ import sys
 
 import torch
 from transformers import BertTokenizer
+import pandas as pd
 
 import models
 from eval import eval_model
@@ -33,6 +34,15 @@ def infer(model_path, max_docs, prediction_output_json_path, device, data_folder
     metrics, confusion, labels_dict, class_report, cluster_metrics = eval_model(model, test_batches, device, task, config["task_type"])
 
     print(metrics)
+    label_f1_dict = {'task':'pubmed-20k'}
+    label_f1_dict.update({ rel_key: metrics[rel_key] for rel_key in ['labels', 'per-label-f1'] })
+    per_label_f1_df = pd.DataFrame(label_f1_dict)
+    per_label_f1_df.rename(columns = {'labels':'label', 'per-label-f1':'F1'}, inplace = True)
+    per_label_f1_df['order'] = range(len(label_f1_dict['labels']))
+    per_label_f1_df = per_label_f1_df[['task', 'order', 'label', 'F1']]
+
+    per_label_f1_df.to_csv("datasets/"+data_folder+'_'+config['task_type']+"_f1_per_label.csv")
+
     print('------------------------------------')
     print(confusion)
     print('------------------------------------')
