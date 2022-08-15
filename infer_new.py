@@ -1,6 +1,7 @@
 import models
 import json
 import sys
+import os
 
 import torch
 from transformers import BertTokenizer
@@ -41,7 +42,10 @@ def infer(model_path, max_docs, prediction_output_json_path, device, data_folder
     per_label_f1_df['order'] = range(len(label_f1_dict['labels']))
     per_label_f1_df = per_label_f1_df[['task', 'order', 'label', 'F1']]
 
-    per_label_f1_df.to_csv("datasets/"+data_folder+'_'+config['task_type']+"_f1_per_label.csv")
+    if not os.path.exists('results'):
+        os.makedirs('results')
+
+    per_label_f1_df.to_csv("results/"+data_folder+'_'+config['task_type']+"_f1_per_label.csv")
 
     print('------------------------------------')
     print(confusion)
