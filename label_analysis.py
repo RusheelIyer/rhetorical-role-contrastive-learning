@@ -35,7 +35,7 @@ def read_f1_per_label(filepath):
 
   results = {}
 
-  with open(filepath+'/f1_per_label.csv', newline='') as csvfile:
+  with open(filepath, newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     row_count = 0
     for row in spamreader:
